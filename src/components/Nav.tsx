@@ -38,7 +38,7 @@ export function Nav() {
       }`}
     >
       <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between px-6 md:h-20 md:px-10">
-        <Logo className="relative z-[60]" />
+        <Logo className="relative z-[60]" tagline="Copywriting agency" />
 
         <nav className="hidden items-center gap-9 lg:flex">
           {NAV_LINKS.map((link) => (

@@ -4,6 +4,7 @@ import Link from 'next/link'
 type LogoProps = {
   variant?: 'dark' | 'light'
   className?: string
+  tagline?: string
 }
 
 const ICON_SIZE: Record<NonNullable<LogoProps['variant']>, number> = {
@@ -21,7 +22,11 @@ const TAGLINE_SIZE: Record<NonNullable<LogoProps['variant']>, string> = {
   light: 'text-xs',
 }
 
-export function Logo({ variant = 'dark', className = '' }: LogoProps) {
+export function Logo({
+  variant = 'dark',
+  className = '',
+  tagline = 'Yes, you are right.',
+}: LogoProps) {
   const iconSize = ICON_SIZE[variant]
   const textColor = variant === 'light' ? 'text-white' : 'text-navy'
 
@@ -50,7 +55,7 @@ export function Logo({ variant = 'dark', className = '' }: LogoProps) {
         <span
           className={`mt-1 font-heading font-semibold uppercase leading-none tracking-[0.12em] text-teal whitespace-nowrap ${TAGLINE_SIZE[variant]}`}
         >
-          Yes, you are right.
+          {tagline}
         </span>
       </span>
     </Link>
