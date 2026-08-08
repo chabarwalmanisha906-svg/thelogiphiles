@@ -18,7 +18,7 @@ export function AdvertisingWriting() {
   const doubled = [...TERMS, ...TERMS]
 
   return (
-    <section className="mark-pattern-light overflow-hidden bg-dark-bg py-28 md:py-36">
+    <section className="overflow-hidden bg-navy py-28 md:py-36">
       <div className="relative mx-auto max-w-[1600px] px-6 md:px-10">
         <ScrollReveal>
           <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal">

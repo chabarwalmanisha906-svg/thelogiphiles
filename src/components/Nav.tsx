@@ -31,14 +31,10 @@ export function Nav() {
     }
   }, [menuOpen])
 
-  const solid = scrolled || menuOpen
-  const textColor = solid ? 'text-navy' : 'text-white'
-  const barColor = solid ? 'bg-navy' : 'bg-white'
-
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
-        solid ? 'bg-offwhite/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(14,50,108,0.08)]' : 'bg-transparent'
+      className={`fixed inset-x-0 top-0 z-50 bg-offwhite/95 backdrop-blur-sm transition-shadow duration-300 ${
+        scrolled || menuOpen ? 'shadow-[0_1px_0_0_rgba(14,50,108,0.08)]' : ''
       }`}
     >
       <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between px-6 md:h-20 md:px-10">
@@ -49,7 +45,7 @@ export function Nav() {
             <Link
               key={link.label}
               href={link.href}
-              className={`group relative font-heading text-[13px] font-semibold tracking-[0.08em] transition-colors duration-300 ${textColor}`}
+              className="group relative font-heading text-[13px] font-semibold tracking-[0.08em] text-navy"
             >
               {link.label}
               <span className="absolute -bottom-1 left-0 h-px w-0 bg-teal transition-all duration-300 group-hover:w-full" />
@@ -57,13 +53,12 @@ export function Nav() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           <Link
             href="/#contact"
-            className={`group hidden items-center gap-2 font-heading text-[13px] font-semibold tracking-[0.08em] transition-colors duration-300 lg:inline-flex ${textColor}`}
+            className="hidden items-center gap-2 bg-navy px-5 py-2.5 font-heading text-[13px] font-semibold tracking-[0.08em] text-white transition-colors hover:bg-teal-dark lg:inline-flex"
           >
-            LET&apos;S TALK
-            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+            LET&apos;S TALK →
           </Link>
 
           <button
@@ -74,13 +69,13 @@ export function Nav() {
             className="relative z-[60] flex h-9 w-9 flex-col items-center justify-center gap-[5px] lg:hidden"
           >
             <span
-              className={`h-px w-6 transition-transform duration-300 ${barColor} ${menuOpen ? 'translate-y-[3px] rotate-45' : ''}`}
+              className={`h-px w-6 bg-navy transition-transform duration-300 ${menuOpen ? 'translate-y-[3px] rotate-45' : ''}`}
             />
             <span
-              className={`h-px w-6 transition-opacity duration-300 ${barColor} ${menuOpen ? 'opacity-0' : ''}`}
+              className={`h-px w-6 bg-navy transition-opacity duration-300 ${menuOpen ? 'opacity-0' : ''}`}
             />
             <span
-              className={`h-px w-6 transition-transform duration-300 ${barColor} ${menuOpen ? '-translate-y-[3px] -rotate-45' : ''}`}
+              className={`h-px w-6 bg-navy transition-transform duration-300 ${menuOpen ? '-translate-y-[3px] -rotate-45' : ''}`}
             />
           </button>
         </div>
