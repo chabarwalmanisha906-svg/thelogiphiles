@@ -2,13 +2,16 @@ import Link from 'next/link'
 import type { PostItem } from '@/lib/data'
 import { InsightsGrid } from '@/components/InsightsGrid'
 import { ScrollReveal } from '@/components/ScrollReveal'
+import { GhostHeading } from '@/components/GhostHeading'
 
 export function InsightsPreview({ items }: { items: PostItem[] }) {
   const preview = items.slice(0, 3)
 
   return (
-    <section className="bg-offwhite px-6 py-28 md:px-10 md:py-36">
-      <div className="mx-auto max-w-[1600px]">
+    <section className="relative overflow-hidden bg-offwhite px-6 py-28 md:px-10 md:py-36">
+      <GhostHeading className="absolute -top-4 right-6 md:right-10">INSIGHTS</GhostHeading>
+
+      <div className="relative mx-auto max-w-[1600px]">
         <ScrollReveal className="mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div>
             <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">

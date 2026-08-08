@@ -14,8 +14,8 @@ export function Footer({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="bg-navy px-6 pb-10 pt-20 text-white md:px-10">
-      <div className="mx-auto max-w-[1600px]">
+    <footer className="mark-pattern-light bg-navy px-6 pb-10 pt-20 text-white md:px-10">
+      <div className="relative mx-auto max-w-[1600px]">
         <div className="flex flex-col justify-between gap-14 border-b border-white/15 pb-14 md:flex-row md:items-end">
           <div>
             <Logo variant="light" className="mb-8" />

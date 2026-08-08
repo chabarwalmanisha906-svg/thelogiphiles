@@ -62,6 +62,35 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Tiled quote-mark motif used as subtle texture on solid-color section blocks.
+     Applied via ::before (not `background-image` directly) so it layers on top of
+     whatever background the section already has instead of overwriting it. */
+  .mark-pattern-light,
+  .mark-pattern-dark {
+    position: relative;
+  }
+
+  .mark-pattern-light::before,
+  .mark-pattern-dark::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-size: 96px 96px;
+  }
+
+  .mark-pattern-light::before {
+    background-image:
+      radial-gradient(circle at 22% 32%, rgba(255, 255, 255, 0.16) 0 4px, transparent 4px),
+      radial-gradient(circle at 34% 32%, rgba(255, 255, 255, 0.16) 0 4px, transparent 4px);
+  }
+
+  .mark-pattern-dark::before {
+    background-image:
+      radial-gradient(circle at 22% 32%, rgba(14, 50, 108, 0.07) 0 4px, transparent 4px),
+      radial-gradient(circle at 34% 32%, rgba(14, 50, 108, 0.07) 0 4px, transparent 4px);
+  }
 }
 
 @keyframes marquee-left {

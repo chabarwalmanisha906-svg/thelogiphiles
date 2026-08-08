@@ -18,8 +18,8 @@ export function AdvertisingWriting() {
   const doubled = [...TERMS, ...TERMS]
 
   return (
-    <section className="overflow-hidden bg-navy py-28 md:py-36">
-      <div className="mx-auto max-w-[1600px] px-6 md:px-10">
+    <section className="mark-pattern-light overflow-hidden bg-dark-bg py-28 md:py-36">
+      <div className="relative mx-auto max-w-[1600px] px-6 md:px-10">
         <ScrollReveal>
           <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal">
             03 — HERO SERVICE
@@ -38,7 +38,7 @@ export function AdvertisingWriting() {
         </ScrollReveal>
       </div>
 
-      <div className="no-scrollbar mt-20 flex overflow-hidden md:mt-28">
+      <div className="no-scrollbar relative mt-20 flex overflow-hidden md:mt-28">
         <div className="marquee-left flex shrink-0 items-center gap-8 pr-8">
           {doubled.map((term, i) => (
             <span

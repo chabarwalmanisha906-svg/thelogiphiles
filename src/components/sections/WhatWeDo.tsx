@@ -1,4 +1,5 @@
 import { ScrollReveal } from '@/components/ScrollReveal'
+import { GhostHeading } from '@/components/GhostHeading'
 
 const SERVICES = [
   {
@@ -35,37 +36,44 @@ const SERVICES = [
 
 export function WhatWeDo() {
   return (
-    <section id="what-we-do" className="scroll-mt-24 bg-offwhite px-6 py-28 md:px-10 md:py-36">
-      <div className="mx-auto max-w-[1600px]">
+    <section
+      id="what-we-do"
+      className="mark-pattern-light relative scroll-mt-24 overflow-hidden bg-navy px-6 py-28 md:px-10 md:py-36"
+    >
+      <GhostHeading variant="onDark" className="absolute -top-4 right-6 md:right-10">
+        DO
+      </GhostHeading>
+
+      <div className="relative mx-auto max-w-[1600px]">
         <ScrollReveal>
-          <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">
+          <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal">
             02 — SERVICES
           </span>
-          <h2 className="mt-4 font-heading text-[clamp(2.5rem,7vw,6rem)] font-extrabold leading-[0.98] tracking-tight text-navy">
+          <h2 className="mt-4 font-heading text-[clamp(2.5rem,7vw,6rem)] font-extrabold leading-[0.98] tracking-tight text-white">
             WHAT WE DO
           </h2>
         </ScrollReveal>
 
-        <div className="mt-16 border-t border-navy/10">
+        <div className="mt-16 border-t border-white/15">
           {SERVICES.map((service, i) => (
             <ScrollReveal key={service.number} delay={i * 0.05}>
               <div
                 data-cursor="EXPLORE →"
-                className="group grid cursor-default grid-cols-1 items-center gap-4 border-b border-navy/10 py-8 transition-colors duration-300 hover:bg-navy/[0.03] md:grid-cols-12 md:gap-8 md:py-10"
+                className="group grid cursor-default grid-cols-1 items-center gap-4 border-b border-white/15 py-8 transition-colors duration-300 hover:bg-white/[0.04] md:grid-cols-12 md:gap-8 md:py-10"
               >
-                <span className="font-heading text-sm font-semibold tracking-[0.15em] text-navy/40 md:col-span-1">
+                <span className="font-heading text-sm font-semibold tracking-[0.15em] text-white/40 md:col-span-1">
                   {service.number}
                 </span>
 
-                <h3 className="font-heading text-2xl font-extrabold tracking-tight text-navy transition-transform duration-300 group-hover:translate-x-2 group-hover:text-teal-dark sm:text-3xl md:col-span-4 md:text-4xl">
+                <h3 className="font-heading text-2xl font-extrabold tracking-tight text-white transition-transform duration-300 group-hover:translate-x-2 group-hover:text-teal sm:text-3xl md:col-span-4 md:text-4xl">
                   {service.title}
                 </h3>
 
-                <p className="font-body text-sm leading-relaxed text-navy/60 md:col-span-6 md:text-base">
+                <p className="font-body text-sm leading-relaxed text-white/60 md:col-span-6 md:text-base">
                   {service.items.join('  ·  ')}
                 </p>
 
-                <span className="font-heading text-xl text-navy/20 transition-all duration-300 group-hover:translate-x-2 group-hover:text-teal md:col-span-1 md:text-right md:text-2xl">
+                <span className="font-heading text-xl text-white/20 transition-all duration-300 group-hover:translate-x-2 group-hover:text-teal md:col-span-1 md:text-right md:text-2xl">
                   →
                 </span>
               </div>

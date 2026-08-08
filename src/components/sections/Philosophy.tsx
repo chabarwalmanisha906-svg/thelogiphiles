@@ -8,8 +8,8 @@ const STATEMENTS = [
 
 export function Philosophy() {
   return (
-    <section className="bg-offwhite px-6 py-28 md:px-10 md:py-40">
-      <div className="mx-auto flex max-w-[1600px] flex-col gap-16 md:gap-24">
+    <section className="mark-pattern-light bg-teal-dark px-6 py-28 md:px-10 md:py-40">
+      <div className="relative mx-auto flex max-w-[1600px] flex-col gap-16 md:gap-24">
         {STATEMENTS.map((lines, i) => (
           <ScrollReveal key={lines[0]} delay={i * 0.05} y={40}>
             <p
@@ -17,8 +17,8 @@ export function Philosophy() {
                 i % 2 === 0 ? 'text-left' : 'text-right'
               }`}
             >
-              <span className="text-navy">{lines[0]} </span>
-              <span className="text-teal-dark">{lines[1]}</span>
+              <span className="text-white">{lines[0]} </span>
+              <span className="text-teal">{lines[1]}</span>
             </p>
           </ScrollReveal>
         ))}
