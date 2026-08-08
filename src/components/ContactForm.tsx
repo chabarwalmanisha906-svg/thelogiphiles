@@ -113,10 +113,9 @@ export function ContactForm() {
         type="submit"
         disabled={status === 'submitting'}
         data-cursor="LET'S TALK →"
-        className="group mt-2 inline-flex w-fit items-center gap-2 font-heading text-sm font-semibold tracking-[0.08em] text-navy disabled:opacity-50"
+        className="mt-2 inline-flex w-fit items-center gap-2 bg-navy px-7 py-4 font-heading text-sm font-semibold tracking-[0.08em] text-white transition-colors hover:bg-teal-dark disabled:opacity-50"
       >
-        {status === 'submitting' ? 'SENDING…' : 'SEND IT OUR WAY'}
-        <span className="transition-transform duration-300 group-hover:translate-x-1.5">→</span>
+        {status === 'submitting' ? 'SENDING…' : 'SEND IT OUR WAY →'}
       </button>
     </form>
   )
