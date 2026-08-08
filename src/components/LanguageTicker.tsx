@@ -14,7 +14,7 @@ const ROW_TWO = ['മലയാളം', 'ਪੰਜਾਬੀ', 'ESPAÑOL', 'FRANÇ
 function Row({ items, className }: { items: string[]; className: string }) {
   const doubled = [...items, ...items]
   return (
-    <div className="no-scrollbar flex overflow-x-hidden overflow-y-visible py-3">
+    <div className="no-scrollbar flex py-3 [clip-path:inset(-100vh_0_-100vh_0)]">
       <div className={`flex shrink-0 items-center gap-10 pr-10 leading-[1.4] ${className}`}>
         {doubled.map((word, i) => (
           <span

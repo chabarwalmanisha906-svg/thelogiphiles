@@ -3,7 +3,7 @@ import { LanguageTicker } from '@/components/LanguageTicker'
 
 export function LanguagesSection() {
   return (
-    <section className="overflow-hidden bg-offwhite py-28 md:py-36">
+    <section className="bg-offwhite py-28 md:py-36">
       <div className="mx-auto max-w-[1600px] px-6 md:px-10">
         <ScrollReveal>
           <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">
