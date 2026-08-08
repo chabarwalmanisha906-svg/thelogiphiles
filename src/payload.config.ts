@@ -12,6 +12,7 @@ import { Categories } from './collections/Categories'
 import { Posts } from './collections/Posts'
 import { Clients } from './collections/Clients'
 import { Enquiries } from './collections/Enquiries'
+import { TeamMembers } from './collections/TeamMembers'
 import { SiteSettings } from './globals/SiteSettings'
 
 const filename = fileURLToPath(import.meta.url)
@@ -24,7 +25,7 @@ export default buildConfig({
       titleSuffix: '- The Logiphiles CMS',
     },
   },
-  collections: [Users, Media, Work, Categories, Posts, Clients, Enquiries],
+  collections: [Users, Media, Work, Categories, Posts, Clients, Enquiries, TeamMembers],
   globals: [SiteSettings],
   editor: lexicalEditor({}),
   secret: process.env.PAYLOAD_SECRET || '',

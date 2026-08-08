@@ -42,6 +42,17 @@ export type ClientItem = {
   order?: number | null
 }
 
+export type TeamMemberItem = {
+  id: string
+  name: string
+  role: string
+  photo: { url?: string | null; alt?: string | null } | string
+  linkedinUrl?: string | null
+  bio?: string | null
+  visible?: boolean | null
+  order?: number | null
+}
+
 export type SiteSettings = {
   heroLineOne?: string | null
   heroLineTwo?: string | null
@@ -162,6 +173,22 @@ export async function getClients(): Promise<ClientItem[]> {
       depth: 1,
     })
     return result.docs as unknown as ClientItem[]
+  } catch {
+    return []
+  }
+}
+
+export async function getTeamMembers(): Promise<TeamMemberItem[]> {
+  try {
+    const payload = await getPayloadClient()
+    const result = await payload.find({
+      collection: 'team-members',
+      where: { visible: { equals: true } },
+      sort: 'order',
+      limit: 50,
+      depth: 1,
+    })
+    return result.docs as unknown as TeamMemberItem[]
   } catch {
     return []
   }

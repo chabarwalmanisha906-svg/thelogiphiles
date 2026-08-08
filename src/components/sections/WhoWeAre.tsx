@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { ScrollReveal } from '@/components/ScrollReveal'
 
 export function WhoWeAre() {
@@ -40,6 +41,17 @@ export function WhoWeAre() {
               <br />
               It&apos;s about finding the right ones.
             </p>
+
+            <Link
+              href="/team"
+              data-cursor="EXPLORE →"
+              className="group inline-flex w-fit items-center gap-2 font-heading text-sm font-semibold tracking-[0.08em] text-navy"
+            >
+              MEET THE TEAM
+              <span className="transition-transform duration-300 group-hover:translate-x-1.5">
+                →
+              </span>
+            </Link>
           </ScrollReveal>
         </div>
       </div>
