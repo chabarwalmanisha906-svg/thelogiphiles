@@ -30,7 +30,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           <div>
             <Logo variant="light" className="mb-8" />
             <p className="font-heading text-2xl font-extrabold leading-[1.1] tracking-tight md:text-4xl">
-              YES, YOU ARE RIGHT.
+              YES, YOU ARE RIGHT;
               <br />
               <span className="text-teal">WE WRITE.</span>
             </p>

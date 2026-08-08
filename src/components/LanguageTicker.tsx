@@ -14,8 +14,8 @@ const ROW_TWO = ['മലയാളം', 'ਪੰਜਾਬੀ', 'ESPAÑOL', 'FRANÇ
 function Row({ items, className }: { items: string[]; className: string }) {
   const doubled = [...items, ...items]
   return (
-    <div className="no-scrollbar flex overflow-hidden">
-      <div className={`flex shrink-0 gap-10 pr-10 ${className}`}>
+    <div className="no-scrollbar flex overflow-x-hidden overflow-y-visible py-3">
+      <div className={`flex shrink-0 items-center gap-10 pr-10 leading-[1.4] ${className}`}>
         {doubled.map((word, i) => (
           <span
             key={`${word}-${i}`}
@@ -33,7 +33,7 @@ function Row({ items, className }: { items: string[]; className: string }) {
 
 export function LanguageTicker() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:gap-6 md:gap-10">
       <Row items={ROW_ONE} className="marquee-left" />
       <Row items={ROW_TWO} className="marquee-right" />
     </div>

@@ -15,7 +15,7 @@ export const SiteSettings: GlobalConfig = {
         {
           label: 'Hero',
           fields: [
-            { name: 'heroLineOne', type: 'text', defaultValue: 'YES, YOU ARE RIGHT.' },
+            { name: 'heroLineOne', type: 'text', defaultValue: 'YES, YOU ARE RIGHT;' },
             { name: 'heroLineTwo', type: 'text', defaultValue: 'WE WRITE.' },
             {
               name: 'heroSupportLine',

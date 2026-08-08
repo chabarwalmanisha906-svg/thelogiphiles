@@ -25,7 +25,7 @@ export function AdvertisingWriting() {
             03 — HERO SERVICE
           </span>
           <h2 className="mt-4 font-heading text-[clamp(2.25rem,6vw,5.5rem)] font-extrabold leading-[0.98] tracking-tight text-white">
-            ADVERTISING
+            ADVERTISEMENT
             <br />
             <span className="text-teal">WRITING.</span>
           </h2>

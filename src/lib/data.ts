@@ -59,7 +59,7 @@ export type SiteSettings = {
 }
 
 const FALLBACK_SETTINGS: SiteSettings = {
-  heroLineOne: 'YES, YOU ARE RIGHT.',
+  heroLineOne: 'YES, YOU ARE RIGHT;',
   heroLineTwo: 'WE WRITE.',
   heroSupportLine: 'Advertising writing. Brand copy. Content. Language. Ideas.',
   heroParagraph:

@@ -20,7 +20,7 @@ export function Hero({ settings }: { settings: SiteSettings }) {
   return (
     <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-offwhite pt-24 md:pt-28">
       <div className="relative mx-auto grid w-full max-w-[1600px] grid-cols-1 items-center gap-16 px-6 md:px-10 lg:grid-cols-12 lg:gap-10">
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-6">
           <motion.h1
             initial="hidden"
             animate="show"
@@ -79,14 +79,15 @@ export function Hero({ settings }: { settings: SiteSettings }) {
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="relative hidden aspect-[4/3] items-center justify-center overflow-hidden bg-white lg:col-span-5 lg:flex"
+          className="relative hidden aspect-square items-center justify-center bg-black p-10 lg:col-span-6 lg:flex xl:p-14"
         >
           <Image
             src="/hero-visual.png"
             alt="The Logiphiles mascot: if you're serious about your brand, you need us for sure."
             fill
             priority
-            sizes="(min-width: 1024px) 40vw, 0px"
+            unoptimized
+            sizes="(min-width: 1024px) 46vw, 0px"
             className="object-contain"
           />
         </motion.div>
