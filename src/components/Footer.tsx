@@ -10,6 +10,16 @@ const FOOTER_LINKS = [
   { label: 'Contact', href: '/#contact' },
 ]
 
+type SocialKey = 'instagramUrl' | 'youtubeUrl' | 'twitterUrl' | 'facebookUrl' | 'linkedinUrl'
+
+const SOCIAL_LINKS: { label: string; key: SocialKey }[] = [
+  { label: 'INSTAGRAM', key: 'instagramUrl' },
+  { label: 'YOUTUBE', key: 'youtubeUrl' },
+  { label: 'TWITTER', key: 'twitterUrl' },
+  { label: 'FACEBOOK', key: 'facebookUrl' },
+  { label: 'LINKEDIN', key: 'linkedinUrl' },
+]
+
 export function Footer({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear()
 
@@ -45,26 +55,17 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           </p>
 
           <div className="flex items-center gap-6">
-            {settings.instagramUrl && (
+            {SOCIAL_LINKS.map(({ label, key }) => (
               <a
-                href={settings.instagramUrl}
-                target="_blank"
+                key={key}
+                href={settings[key] || '#'}
+                target={settings[key] ? '_blank' : undefined}
                 rel="noopener noreferrer"
                 className="font-heading text-[13px] font-semibold tracking-[0.08em] text-white/80 transition-colors hover:text-teal"
               >
-                INSTAGRAM
+                {label}
               </a>
-            )}
-            {settings.linkedinUrl && (
-              <a
-                href={settings.linkedinUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-heading text-[13px] font-semibold tracking-[0.08em] text-white/80 transition-colors hover:text-teal"
-              >
-                LINKEDIN
-              </a>
-            )}
+            ))}
           </div>
         </div>
       </div>

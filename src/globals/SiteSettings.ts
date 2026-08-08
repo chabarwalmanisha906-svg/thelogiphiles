@@ -56,6 +56,9 @@ export const SiteSettings: GlobalConfig = {
             { name: 'contactEmail', type: 'email', defaultValue: 'hello@thelogiphiles.com' },
             { name: 'instagramUrl', type: 'text' },
             { name: 'linkedinUrl', type: 'text' },
+            { name: 'youtubeUrl', type: 'text' },
+            { name: 'twitterUrl', type: 'text' },
+            { name: 'facebookUrl', type: 'text' },
           ],
         },
         {

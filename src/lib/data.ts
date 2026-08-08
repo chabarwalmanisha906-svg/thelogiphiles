@@ -51,6 +51,9 @@ export type SiteSettings = {
   contactEmail?: string | null
   instagramUrl?: string | null
   linkedinUrl?: string | null
+  youtubeUrl?: string | null
+  twitterUrl?: string | null
+  facebookUrl?: string | null
   defaultSeoTitle?: string | null
   defaultSeoDescription?: string | null
 }
@@ -70,6 +73,9 @@ const FALLBACK_SETTINGS: SiteSettings = {
   contactEmail: 'hello@thelogiphiles.com',
   instagramUrl: '',
   linkedinUrl: '',
+  youtubeUrl: '',
+  twitterUrl: '',
+  facebookUrl: '',
   defaultSeoTitle: 'The Logiphiles | Advertising Writing & Brand Communication',
   defaultSeoDescription:
     'The Logiphiles is an advertising writing and communication agency creating brand copy, campaigns, content and multilingual communication.',
