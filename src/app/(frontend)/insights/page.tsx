@@ -1,0 +1,30 @@
+import type { Metadata } from 'next'
+import { getPosts } from '@/lib/data'
+import { InsightsGrid } from '@/components/InsightsGrid'
+import { ScrollReveal } from '@/components/ScrollReveal'
+
+export const metadata: Metadata = {
+  title: 'Insights',
+  description: 'Words on our mind — perspectives on advertising, language and communication from The Logiphiles.',
+}
+
+export default async function InsightsPage() {
+  const posts = await getPosts()
+
+  return (
+    <div className="px-6 pb-28 pt-40 md:px-10 md:pb-36 md:pt-48">
+      <div className="mx-auto max-w-[1600px]">
+        <ScrollReveal className="mb-16 max-w-3xl">
+          <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">
+            INSIGHTS
+          </span>
+          <h1 className="mt-4 font-heading text-[clamp(2.5rem,7vw,5.5rem)] font-extrabold leading-[0.98] tracking-tight text-navy">
+            WORDS ON OUR MIND.
+          </h1>
+        </ScrollReveal>
+
+        <InsightsGrid items={posts} />
+      </div>
+    </div>
+  )
+}

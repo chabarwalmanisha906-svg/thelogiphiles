@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Logiphiles
 
-## Getting Started
+Website for The Logiphiles — an advertising writing and brand communication agency. Built with
+Next.js (App Router) and Payload CMS.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Next.js 16** (App Router, TypeScript, Tailwind CSS v4)
+- **Payload CMS 3** (co-located inside the Next.js app under `/admin`), MongoDB adapter
+- **Framer Motion** for scroll reveals, the mobile menu, and the custom cursor
+- **Resend** for contact-form email delivery
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Content model (edit in `/admin`, no code required)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Work** — case studies (Work grid + template detail page with challenge/approach/writing/outcome/gallery)
+- **Posts** ("Insights") — articles, with categories, draft/publish status, and SEO fields
+- **Clients** — logo grid shown in the "Trusted to Write" section
+- **Enquiries** — every contact-form submission is stored here, in addition to being emailed
+- **Site Settings** (global) — hero copy, credential stats, contact email, social links, default SEO
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Local setup
 
-## Learn More
+1. Copy the env template and fill in real values:
+   ```bash
+   cp .env.example .env
+   ```
+   - `DATABASE_URI` — a MongoDB connection string (e.g. from a free MongoDB Atlas cluster)
+   - `PAYLOAD_SECRET` — any long random string:
+     `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+   - `RESEND_API_KEY` — from [resend.com](https://resend.com) (contact form emails still get
+     stored in the Enquiries collection even without this)
 
-To learn more about Next.js, take a look at the following resources:
+2. Install dependencies and run the dev server:
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Visit [http://localhost:3000](http://localhost:3000) for the site and
+   [http://localhost:3000/admin](http://localhost:3000/admin) for the CMS. The first visit to
+   `/admin` prompts you to create the first admin user.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploying (Vercel)
 
-## Deploy on Vercel
+1. Import this repo in the [Vercel dashboard](https://vercel.com/new).
+2. Add the same environment variables from `.env` to the Vercel project (Settings → Environment
+   Variables), setting `NEXT_PUBLIC_SITE_URL` to your production domain.
+3. **Image uploads**: Payload's default local-disk storage does not persist on Vercel's
+   serverless filesystem. Before uploading real Work/Insights/Client images in production, add a
+   cloud storage adapter, e.g. `@payloadcms/storage-vercel-blob`, and wire it into
+   `src/payload.config.ts`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Brand palette, type scale, and section content follow the internal creative brief; colors and
+  fonts are defined as design tokens in `src/app/(frontend)/globals.css`.
+- The logo in the nav/footer is currently a text-based placeholder wordmark
+  (`src/components/Logo.tsx`) pending the final logo file.

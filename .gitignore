@@ -36,6 +36,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# claude code
+.claude/
+
+# payload uploads (local dev only — use cloud storage in production)
+/media/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
