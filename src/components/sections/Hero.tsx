@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, type Variants } from 'framer-motion'
 import type { SiteSettings } from '@/lib/data'
 
@@ -78,17 +79,15 @@ export function Hero({ settings }: { settings: SiteSettings }) {
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="relative hidden aspect-[4/5] items-center justify-center overflow-hidden bg-[#f0ede6] lg:col-span-5 lg:flex"
+          className="relative hidden aspect-[4/3] items-center justify-center overflow-hidden bg-white lg:col-span-5 lg:flex"
         >
-          <div
-            aria-hidden="true"
-            className="brand-gradient h-[130%] w-[70%] rotate-[18deg] rounded-[45%] blur-[2px]"
-          />
-          <motion.div
-            aria-hidden="true"
-            className="absolute h-[90%] w-[45%] -rotate-[12deg] rounded-[45%] bg-teal/70 mix-blend-multiply blur-[1px]"
-            animate={{ rotate: [-12, -8, -12] }}
-            transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+          <Image
+            src="/hero-visual.png"
+            alt="The Logiphiles mascot: if you're serious about your brand, you need us for sure."
+            fill
+            priority
+            sizes="(min-width: 1024px) 40vw, 0px"
+            className="object-contain"
           />
         </motion.div>
       </div>
