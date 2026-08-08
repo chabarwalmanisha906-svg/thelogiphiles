@@ -9,7 +9,7 @@ export function LanguagesSection() {
           <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">
             05 — LANGUAGE
           </span>
-          <h2 className="mt-4 font-heading text-[clamp(2.25rem,5.5vw,4.5rem)] font-extrabold leading-[0.98] tracking-tight text-navy">
+          <h2 className="mt-4 font-heading text-[clamp(2.5rem,7vw,6rem)] font-extrabold leading-[0.98] tracking-tight text-navy">
             ONE IDEA.
             <br />
             36+ WAYS TO SAY IT.

@@ -18,7 +18,7 @@ export default async function WorkPage() {
           <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">
             WORK
           </span>
-          <h1 className="mt-4 font-heading text-[clamp(2.5rem,7vw,5.5rem)] font-extrabold leading-[0.98] tracking-tight text-navy">
+          <h1 className="mt-4 font-heading text-[clamp(2.75rem,8vw,7rem)] font-extrabold leading-[0.98] tracking-tight text-navy">
             WORDS WE&apos;VE PUT TO WORK.
           </h1>
         </ScrollReveal>

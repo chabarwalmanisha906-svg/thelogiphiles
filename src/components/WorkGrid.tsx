@@ -1,18 +1,42 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { WorkItem } from '@/lib/data'
 import { mediaAlt, mediaUrl } from '@/lib/media'
-import { ScrollReveal } from '@/components/ScrollReveal'
-
-const LAYOUT_PATTERN = [
-  'md:col-span-7 aspect-[4/3]',
-  'md:col-span-5 aspect-[3/4]',
-  'md:col-span-5 aspect-[3/4]',
-  'md:col-span-7 aspect-[4/3]',
-  'md:col-span-12 aspect-[16/8]',
-]
 
 export function WorkGrid({ items }: { items: WorkItem[] }) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [active, setActive] = useState(0)
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track || items.length === 0) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = cardRefs.current.findIndex((el) => el === entry.target)
+            if (index !== -1) setActive(index)
+          }
+        })
+      },
+      { root: track, threshold: 0.6 },
+    )
+
+    cardRefs.current.forEach((el) => el && observer.observe(el))
+    return () => observer.disconnect()
+  }, [items.length])
+
+  function scrollToIndex(index: number) {
+    const card = cardRefs.current[index]
+    if (!card || !trackRef.current) return
+    trackRef.current.scrollTo({ left: card.offsetLeft - 24, behavior: 'smooth' })
+  }
+
   if (items.length === 0) {
     return (
       <p className="font-body text-navy/50">
@@ -22,47 +46,87 @@ export function WorkGrid({ items }: { items: WorkItem[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:gap-10">
-      {items.map((item, i) => {
-        const layout = LAYOUT_PATTERN[i % LAYOUT_PATTERN.length]
-        const imageUrl = mediaUrl(item.coverImage)
+    <div>
+      <div className="mb-8 flex items-center gap-6">
+        <span className="font-heading text-sm font-semibold tracking-[0.15em] text-navy/50">
+          <span className="text-teal-dark">{String(active + 1).padStart(2, '0')}</span> /{' '}
+          {String(items.length).padStart(2, '0')}
+        </span>
 
-        return (
-          <ScrollReveal key={item.id} className={`col-span-1 ${layout}`}>
-            <Link
-              href={`/work/${item.slug}`}
-              data-cursor="VIEW CASE →"
-              className="group relative block h-full w-full overflow-hidden bg-navy"
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label="Previous project"
+            onClick={() => scrollToIndex(Math.max(active - 1, 0))}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-navy/20 font-heading text-navy transition-colors hover:border-teal-dark hover:text-teal-dark"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            aria-label="Next project"
+            onClick={() => scrollToIndex(Math.min(active + 1, items.length - 1))}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-navy/20 font-heading text-navy transition-colors hover:border-teal-dark hover:text-teal-dark"
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      <div
+        ref={trackRef}
+        className="no-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-4 md:gap-10"
+      >
+        {items.map((item, i) => {
+          const imageUrl = mediaUrl(item.coverImage)
+
+          return (
+            <div
+              key={item.id}
+              ref={(el) => {
+                cardRefs.current[i] = el
+              }}
+              className="w-[82vw] shrink-0 snap-start sm:w-[58vw] md:w-[42vw] lg:w-[34vw]"
             >
-              {imageUrl && (
-                <Image
-                  src={imageUrl}
-                  alt={mediaAlt(item.coverImage, item.title)}
-                  fill
-                  sizes="(min-width: 768px) 60vw, 100vw"
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                />
-              )}
-              <div className="absolute inset-0 bg-navy/20 transition-colors duration-500 group-hover:bg-navy/70" />
+              <Link href={`/work/${item.slug}`} data-cursor="VIEW CASE →" className="group block">
+                <div className="relative aspect-[4/5] w-full overflow-hidden bg-navy">
+                  {imageUrl && (
+                    <Image
+                      src={imageUrl}
+                      alt={mediaAlt(item.coverImage, item.title)}
+                      fill
+                      sizes="(min-width: 1024px) 34vw, (min-width: 768px) 42vw, 82vw"
+                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-navy/10 transition-colors duration-500 group-hover:bg-navy/50" />
 
-              <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
-                <span className="font-heading text-xs font-semibold tracking-[0.15em] text-teal opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                  {item.category}
-                </span>
-                <h3 className="mt-2 font-heading text-2xl font-extrabold tracking-tight text-white md:text-3xl">
-                  {item.title}
-                </h3>
-                <p className="mt-2 max-w-md font-body text-sm text-white/0 transition-colors duration-500 group-hover:text-white/80">
+                  <span className="absolute right-5 top-5 inline-flex items-center gap-2 font-heading text-xs font-semibold tracking-[0.1em] text-white opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                    VIEW CASE →
+                  </span>
+                </div>
+
+                <div className="mt-5 flex items-start justify-between gap-4">
+                  <div>
+                    <span className="font-heading text-xs font-semibold tracking-[0.15em] text-teal-dark">
+                      {item.category}
+                    </span>
+                    <h3 className="mt-1 font-heading text-2xl font-extrabold tracking-tight text-navy transition-colors duration-300 group-hover:text-teal-dark md:text-3xl">
+                      {item.title}
+                    </h3>
+                  </div>
+                  <span className="mt-2 shrink-0 font-heading text-xl text-navy/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-teal-dark">
+                    →
+                  </span>
+                </div>
+                <p className="mt-2 max-w-md font-body text-sm leading-relaxed text-navy/60">
                   {item.description}
                 </p>
-                <span className="mt-4 inline-flex items-center gap-2 font-heading text-xs font-semibold tracking-[0.1em] text-white opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                  VIEW CASE →
-                </span>
-              </div>
-            </Link>
-          </ScrollReveal>
-        )
-      })}
+              </Link>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
