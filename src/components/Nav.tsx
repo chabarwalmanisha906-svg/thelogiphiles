@@ -37,7 +37,7 @@ export function Nav() {
         scrolled || menuOpen ? 'shadow-[0_1px_0_0_rgba(14,50,108,0.08)]' : ''
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between px-6 md:h-20 md:px-10">
+      <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between px-6 md:h-16 md:px-10">
         <Logo className="relative z-[60]" tagline="Copywriting agency" />
 
         <nav className="hidden items-center gap-9 lg:flex">

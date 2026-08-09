@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { Logo } from './Logo'
 import type { SiteSettings } from '@/lib/data'
@@ -26,7 +27,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
   return (
     <footer className="bg-navy px-6 pb-10 pt-20 text-white md:px-10">
       <div className="relative mx-auto max-w-[1600px]">
-        <div className="flex flex-col justify-between gap-14 border-b border-white/15 pb-14 md:flex-row md:items-end">
+        <div className="flex flex-col items-center justify-between gap-10 border-b border-white/15 pb-14 md:flex-row md:items-end md:gap-6">
           <div>
             <Logo variant="light" className="mb-8" tagline="Copywriting agency" />
             <p className="font-heading text-2xl font-extrabold leading-[1.1] tracking-tight md:text-4xl">
@@ -36,7 +37,16 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-x-10 gap-y-4">
+          <Image
+            src="/footer-merch.png"
+            alt="A Logiphiles branded desk cup holding pens and a pencil"
+            width={494}
+            height={783}
+            unoptimized
+            className="h-28 w-auto shrink-0 drop-shadow-[0_20px_30px_rgba(0,0,0,0.35)] sm:h-36 md:h-44"
+          />
+
+          <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 md:justify-end">
             {FOOTER_LINKS.map((link) => (
               <Link
                 key={link.label}
