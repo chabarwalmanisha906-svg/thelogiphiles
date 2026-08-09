@@ -20,7 +20,7 @@ const ITEMS: ItemConfig[] = [
   {
     src: '/falling-pen.png',
     width: 22,
-    aspect: 924 / 163,
+    aspect: 841 / 163,
     xOffset: -40,
     startYOffset: -20,
     fadeInDelay: 0,
