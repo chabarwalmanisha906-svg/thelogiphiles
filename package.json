@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@payloadcms/db-mongodb": "^3.87.1",
+    "@payloadcms/db-postgres": "^3.87.1",
     "@payloadcms/next": "^3.87.1",
     "@payloadcms/richtext-lexical": "^3.87.1",
     "@payloadcms/ui": "^3.87.1",
