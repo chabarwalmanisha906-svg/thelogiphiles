@@ -79,7 +79,7 @@ export function Hero({ settings }: { settings: SiteSettings }) {
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="relative hidden aspect-square items-center justify-center bg-black p-10 lg:col-span-6 lg:flex xl:p-14"
+          className="relative hidden aspect-square items-center justify-center lg:col-span-6 lg:flex"
         >
           <Image
             src="/hero-visual.png"

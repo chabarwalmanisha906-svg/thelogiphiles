@@ -28,7 +28,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       <div className="relative mx-auto max-w-[1600px]">
         <div className="flex flex-col justify-between gap-14 border-b border-white/15 pb-14 md:flex-row md:items-end">
           <div>
-            <Logo variant="light" className="mb-8" />
+            <Logo variant="light" className="mb-8" tagline="Copywriting agency" />
             <p className="font-heading text-2xl font-extrabold leading-[1.1] tracking-tight md:text-4xl">
               YES, YOU ARE RIGHT;
               <br />
