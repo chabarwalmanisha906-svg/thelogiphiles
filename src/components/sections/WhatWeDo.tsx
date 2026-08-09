@@ -71,7 +71,7 @@ export function WhatWeDo() {
                   {service.items.join('  ·  ')}
                 </p>
 
-                <span className="font-heading text-xl text-navy/20 transition-all duration-300 group-hover:translate-x-2 group-hover:text-teal md:col-span-1 md:text-right md:text-2xl">
+                <span className="font-heading text-xl text-navy/20 transition-all duration-300 group-hover:translate-x-2 group-hover:text-teal-dark md:col-span-1 md:text-right md:text-2xl">
                   →
                 </span>
               </div>

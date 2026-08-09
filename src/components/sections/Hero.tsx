@@ -29,7 +29,7 @@ export function Hero({ settings }: { settings: SiteSettings }) {
             <motion.span variants={reveal} custom={0.05} className="block text-navy">
               {settings.heroLineOne}
             </motion.span>
-            <motion.span variants={reveal} custom={0.2} className="block text-teal">
+            <motion.span variants={reveal} custom={0.2} className="block text-teal-dark">
               {settings.heroLineTwo}
             </motion.span>
           </motion.h1>

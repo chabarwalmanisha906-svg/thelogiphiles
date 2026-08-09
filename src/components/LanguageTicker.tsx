@@ -20,7 +20,7 @@ function Row({ items, className }: { items: string[]; className: string }) {
           <span
             key={`${word}-${i}`}
             className={`font-heading text-4xl font-extrabold tracking-tight sm:text-6xl md:text-7xl ${
-              i % 2 === 0 ? 'text-navy' : 'text-teal'
+              i % 2 === 0 ? 'text-navy' : 'text-teal-dark'
             }`}
           >
             {word}
