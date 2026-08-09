@@ -37,15 +37,6 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             </p>
           </div>
 
-          <Image
-            src="/footer-merch.png"
-            alt="A Logiphiles branded desk cup holding pens and a pencil"
-            width={494}
-            height={783}
-            unoptimized
-            className="h-28 w-auto shrink-0 drop-shadow-[0_20px_30px_rgba(0,0,0,0.35)] sm:h-36 md:h-44"
-          />
-
           <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 md:justify-end">
             {FOOTER_LINKS.map((link) => (
               <Link
@@ -57,6 +48,16 @@ export function Footer({ settings }: { settings: SiteSettings }) {
               </Link>
             ))}
           </div>
+
+          <Image
+            id="footer-merch-cup"
+            src="/footer-merch.png"
+            alt="A Logiphiles branded desk cup holding pens and a pencil"
+            width={647}
+            height={984}
+            unoptimized
+            className="h-28 w-auto shrink-0 drop-shadow-[0_20px_30px_rgba(0,0,0,0.35)] sm:h-36 md:h-44"
+          />
         </div>
 
         <div className="flex flex-col-reverse items-start justify-between gap-6 pt-8 md:flex-row md:items-center">
