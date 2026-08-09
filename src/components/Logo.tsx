@@ -25,7 +25,7 @@ const TAGLINE_SIZE: Record<NonNullable<LogoProps['variant']>, string> = {
 export function Logo({
   variant = 'dark',
   className = '',
-  tagline = 'Yes, you are right.',
+  tagline = 'Yes, you are right;',
 }: LogoProps) {
   const iconSize = ICON_SIZE[variant]
   const textColor = variant === 'light' ? 'text-white' : 'text-navy'
