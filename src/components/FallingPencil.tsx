@@ -23,7 +23,7 @@ const ITEMS: ItemConfig[] = [
     src: '/falling-pen.png',
     height: TARGET_HEIGHT,
     aspect: 841 / 163,
-    xOffset: -40,
+    xOffset: -16,
     startYOffset: -20,
     fadeInDelay: 0,
     rotateFrom: -8,
@@ -47,7 +47,7 @@ const ITEMS: ItemConfig[] = [
     src: '/falling-marker.png',
     height: TARGET_HEIGHT,
     aspect: 911 / 251,
-    xOffset: 40,
+    xOffset: 16,
     startYOffset: -40,
     fadeInDelay: 0.04,
     rotateFrom: 7,
@@ -106,6 +106,8 @@ function FallingItem({
         height: item.height,
         rotate,
         opacity,
+        filter:
+          'drop-shadow(0 0 2px rgba(255,255,255,0.85)) drop-shadow(0 4px 10px rgba(0,0,0,0.35))',
       }}
     />
   )
