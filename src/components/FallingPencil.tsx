@@ -7,7 +7,8 @@ type ItemConfig = {
   src: string
   height: number
   aspect: number
-  xOffset: number
+  xOffsetStart: number
+  xOffsetEnd: number
   startYOffset: number
   fadeInDelay: number
   rotateFrom: number
@@ -22,8 +23,9 @@ const ITEMS: ItemConfig[] = [
   {
     src: '/falling-pen.png',
     height: TARGET_HEIGHT,
-    aspect: 841 / 163,
-    xOffset: -16,
+    aspect: 1000 / 166,
+    xOffsetStart: -320,
+    xOffsetEnd: -16,
     startYOffset: -20,
     fadeInDelay: 0,
     rotateFrom: -8,
@@ -34,8 +36,9 @@ const ITEMS: ItemConfig[] = [
   {
     src: '/falling-pencil.png',
     height: TARGET_HEIGHT,
-    aspect: 968 / 114,
-    xOffset: 0,
+    aspect: 946 / 115,
+    xOffsetStart: 0,
+    xOffsetEnd: 0,
     startYOffset: 25,
     fadeInDelay: 0.02,
     rotateFrom: -5,
@@ -46,8 +49,9 @@ const ITEMS: ItemConfig[] = [
   {
     src: '/falling-marker.png',
     height: TARGET_HEIGHT,
-    aspect: 911 / 251,
-    xOffset: 16,
+    aspect: 925 / 171,
+    xOffsetStart: 320,
+    xOffsetEnd: 16,
     startYOffset: -40,
     fadeInDelay: 0.04,
     rotateFrom: 7,
@@ -57,7 +61,7 @@ const ITEMS: ItemConfig[] = [
   },
 ]
 
-type Range = { startX: number; startY: number; endX: number; endY: number; pageFraction: number }
+type Range = { startX: number; startY: number; endX: number; endY: number }
 
 function FallingItem({
   item,
@@ -77,15 +81,15 @@ function FallingItem({
   const left = useTransform(
     scrollYProgress,
     [0, 1],
-    [range.startX + item.xOffset, range.endX + item.xOffset],
+    [range.startX + item.xOffsetStart, range.endX + item.xOffsetEnd],
   )
   const rotate = useTransform(
     scrollYProgress,
     [0, 0.5, 1],
     [item.rotateFrom, item.rotateMid, item.rotateTo],
   )
-  const fadeInStart = range.pageFraction + item.fadeInDelay
-  const fadeInEnd = fadeInStart + 0.05
+  const fadeInStart = 0.015 + item.fadeInDelay
+  const fadeInEnd = fadeInStart + 0.03
   const opacity = useTransform(
     scrollYProgress,
     [0, fadeInStart, fadeInEnd, item.fadeOutStart, 1],
@@ -132,9 +136,8 @@ export function FallingPencil() {
       const startY = heroRect.top + window.scrollY
       const endX = footerRect.left + footerRect.width / 2 + window.scrollX
       const endY = footerRect.top + window.scrollY - maxScrollY + footerRect.height * 0.2
-      const pageFraction = window.innerHeight / maxScrollY
 
-      setRange({ startX, startY, endX, endY, pageFraction })
+      setRange({ startX, startY, endX, endY })
     }
 
     measure()

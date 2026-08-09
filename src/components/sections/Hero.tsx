@@ -90,12 +90,6 @@ export function Hero({ settings }: { settings: SiteSettings }) {
             sizes="(min-width: 1024px) 46vw, 0px"
             className="object-contain"
           />
-          <span
-            id="hero-cup-anchor"
-            aria-hidden="true"
-            className="pointer-events-none absolute h-px w-px"
-            style={{ left: '14%', top: '31%' }}
-          />
         </motion.div>
       </div>
 
@@ -103,6 +97,7 @@ export function Hero({ settings }: { settings: SiteSettings }) {
         <span className="font-heading text-xs font-semibold tracking-[0.2em] text-navy/40">
           SCROLL
         </span>
+        <span id="hero-cup-anchor" aria-hidden="true" className="h-px w-px" />
       </div>
     </section>
   )
