@@ -3,22 +3,14 @@ import Link from 'next/link'
 import { Logo } from './Logo'
 import type { SiteSettings } from '@/lib/data'
 
-const FOOTER_LINKS = [
-  { label: 'Who We Are', href: '/#who-we-are' },
-  { label: 'What We Do', href: '/#what-we-do' },
-  { label: 'Work', href: '/work' },
-  { label: 'Insights', href: '/insights' },
-  { label: 'Contact', href: '/#contact' },
-]
-
 type SocialKey = 'instagramUrl' | 'youtubeUrl' | 'twitterUrl' | 'facebookUrl' | 'linkedinUrl'
 
-const SOCIAL_LINKS: { label: string; key: SocialKey }[] = [
-  { label: 'INSTAGRAM', key: 'instagramUrl' },
-  { label: 'YOUTUBE', key: 'youtubeUrl' },
-  { label: 'TWITTER', key: 'twitterUrl' },
-  { label: 'FACEBOOK', key: 'facebookUrl' },
-  { label: 'LINKEDIN', key: 'linkedinUrl' },
+const FOOTER_COLUMNS: { label: string; href: string; socialLabel: string; socialKey: SocialKey }[] = [
+  { label: 'Who We Are', href: '/#who-we-are', socialLabel: 'INSTAGRAM', socialKey: 'instagramUrl' },
+  { label: 'What We Do', href: '/#what-we-do', socialLabel: 'YOUTUBE', socialKey: 'youtubeUrl' },
+  { label: 'Work', href: '/work', socialLabel: 'TWITTER', socialKey: 'twitterUrl' },
+  { label: 'Insights', href: '/insights', socialLabel: 'FACEBOOK', socialKey: 'facebookUrl' },
+  { label: 'Contact', href: '/#contact', socialLabel: 'LINKEDIN', socialKey: 'linkedinUrl' },
 ]
 
 export function Footer({ settings }: { settings: SiteSettings }) {
@@ -37,15 +29,29 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 md:justify-end">
-            {FOOTER_LINKS.map((link) => (
+          <div className="grid grid-cols-5 gap-x-8 gap-y-5 text-center md:text-left">
+            {FOOTER_COLUMNS.map((col) => (
               <Link
-                key={link.label}
-                href={link.href}
+                key={col.label}
+                href={col.href}
                 className="font-heading text-[13px] font-semibold tracking-[0.08em] text-white/80 transition-colors hover:text-mint"
               >
-                {link.label.toUpperCase()}
+                {col.label.toUpperCase()}
               </Link>
+            ))}
+
+            <div className="col-span-5 h-px bg-white/15" />
+
+            {FOOTER_COLUMNS.map((col) => (
+              <a
+                key={col.socialKey}
+                href={settings[col.socialKey] || '#'}
+                target={settings[col.socialKey] ? '_blank' : undefined}
+                rel="noopener noreferrer"
+                className="font-heading text-[13px] font-semibold tracking-[0.08em] text-white/80 transition-colors hover:text-mint"
+              >
+                {col.socialLabel}
+              </a>
             ))}
           </div>
 
@@ -60,25 +66,9 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           />
         </div>
 
-        <div className="flex flex-col-reverse items-start justify-between gap-6 pt-8 md:flex-row md:items-center">
-          <p className="font-body text-sm text-white/60">
-            © {year} The Logiphiles. All rights reserved.
-          </p>
-
-          <div className="flex items-center gap-x-10 md:-translate-x-[280px]">
-            {SOCIAL_LINKS.map(({ label, key }) => (
-              <a
-                key={key}
-                href={settings[key] || '#'}
-                target={settings[key] ? '_blank' : undefined}
-                rel="noopener noreferrer"
-                className="font-heading text-[13px] font-semibold tracking-[0.08em] text-white/80 transition-colors hover:text-mint"
-              >
-                {label}
-              </a>
-            ))}
-          </div>
-        </div>
+        <p className="pt-8 text-center font-body text-sm text-white/60 md:text-left">
+          © {year} The Logiphiles. All rights reserved.
+        </p>
       </div>
     </footer>
   )

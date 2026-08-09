@@ -9,6 +9,7 @@ type ItemConfig = {
   aspect: number
   xOffset: number
   startYOffset: number
+  fadeInDelay: number
   rotateFrom: number
   rotateMid: number
   rotateTo: number
@@ -18,10 +19,11 @@ type ItemConfig = {
 const ITEMS: ItemConfig[] = [
   {
     src: '/falling-pen.png',
-    width: 30,
+    width: 24,
     aspect: 1000 / 158,
     xOffset: -40,
     startYOffset: -20,
+    fadeInDelay: 0,
     rotateFrom: -16,
     rotateMid: 8,
     rotateTo: -6,
@@ -29,10 +31,11 @@ const ITEMS: ItemConfig[] = [
   },
   {
     src: '/falling-pencil.png',
-    width: 34,
+    width: 27,
     aspect: 946 / 116,
     xOffset: 0,
     startYOffset: 25,
+    fadeInDelay: 0.02,
     rotateFrom: -10,
     rotateMid: 6,
     rotateTo: -4,
@@ -40,10 +43,11 @@ const ITEMS: ItemConfig[] = [
   },
   {
     src: '/falling-marker.png',
-    width: 32,
+    width: 25,
     aspect: 925 / 171,
     xOffset: 40,
     startYOffset: -40,
+    fadeInDelay: 0.04,
     rotateFrom: 14,
     rotateMid: -8,
     rotateTo: 5,
@@ -51,7 +55,7 @@ const ITEMS: ItemConfig[] = [
   },
 ]
 
-type Range = { startX: number; startY: number; endX: number; endY: number }
+type Range = { startX: number; startY: number; endX: number; endY: number; pageFraction: number }
 
 function FallingItem({
   item,
@@ -78,7 +82,13 @@ function FallingItem({
     [0, 0.5, 1],
     [item.rotateFrom, item.rotateMid, item.rotateTo],
   )
-  const opacity = useTransform(scrollYProgress, [0, item.fadeOutStart, 1], [1, 1, 0])
+  const fadeInStart = range.pageFraction + item.fadeInDelay
+  const fadeInEnd = fadeInStart + 0.05
+  const opacity = useTransform(
+    scrollYProgress,
+    [0, fadeInStart, fadeInEnd, item.fadeOutStart, 1],
+    [0, 0, 1, 1, 0],
+  )
 
   return (
     <motion.img
@@ -118,8 +128,9 @@ export function FallingPencil() {
       const startY = heroRect.top + window.scrollY
       const endX = footerRect.left + footerRect.width / 2 + window.scrollX
       const endY = footerRect.top + window.scrollY - maxScrollY + footerRect.height * 0.2
+      const pageFraction = window.innerHeight / maxScrollY
 
-      setRange({ startX, startY, endX, endY })
+      setRange({ startX, startY, endX, endY, pageFraction })
     }
 
     measure()
