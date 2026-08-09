@@ -94,7 +94,7 @@ export function Hero({ settings }: { settings: SiteSettings }) {
             id="hero-cup-anchor"
             aria-hidden="true"
             className="pointer-events-none absolute h-px w-px"
-            style={{ left: '30%', top: '79%' }}
+            style={{ left: '29.5%', top: '42.7%' }}
           />
         </motion.div>
       </div>
