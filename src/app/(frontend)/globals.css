@@ -2,12 +2,9 @@
 
 @theme {
   --color-navy: #0e326c;
-  --color-teal: #28bb9e;
-  --color-teal-dark: #145a52;
   --color-mint: #10b981;
   --color-offwhite: #f7f8f7;
   --color-white: #ffffff;
-  --color-dark-bg: #082f35;
 
   --font-heading: var(--font-montserrat);
   --font-body: var(--font-manrope);
@@ -35,7 +32,7 @@
   }
 
   ::selection {
-    background-color: var(--color-teal);
+    background-color: var(--color-mint);
     color: var(--color-navy);
   }
 
@@ -45,16 +42,12 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-teal);
+    outline: 2px solid var(--color-mint);
     outline-offset: 3px;
   }
 }
 
 @layer utilities {
-  .brand-gradient {
-    background-image: linear-gradient(120deg, #0e326c 0%, #145a52 55%, #28bb9e 100%);
-  }
-
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -62,35 +55,6 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
-  }
-
-  /* Tiled quote-mark motif used as subtle texture on solid-color section blocks.
-     Applied via ::before (not `background-image` directly) so it layers on top of
-     whatever background the section already has instead of overwriting it. */
-  .mark-pattern-light,
-  .mark-pattern-dark {
-    position: relative;
-  }
-
-  .mark-pattern-light::before,
-  .mark-pattern-dark::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-size: 96px 96px;
-  }
-
-  .mark-pattern-light::before {
-    background-image:
-      radial-gradient(circle at 22% 32%, rgba(255, 255, 255, 0.16) 0 4px, transparent 4px),
-      radial-gradient(circle at 34% 32%, rgba(255, 255, 255, 0.16) 0 4px, transparent 4px);
-  }
-
-  .mark-pattern-dark::before {
-    background-image:
-      radial-gradient(circle at 22% 32%, rgba(14, 50, 108, 0.07) 0 4px, transparent 4px),
-      radial-gradient(circle at 34% 32%, rgba(14, 50, 108, 0.07) 0 4px, transparent 4px);
   }
 }
 

@@ -52,7 +52,7 @@ export function CustomCursor() {
           paddingInline: label ? 14 : 0,
         }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="flex -translate-x-1/2 -translate-y-1/2 items-center justify-center whitespace-nowrap rounded-full bg-teal"
+        className="flex -translate-x-1/2 -translate-y-1/2 items-center justify-center whitespace-nowrap rounded-full bg-mint"
       >
         {label && (
           <span className="font-heading text-[11px] font-semibold tracking-[0.08em] text-navy">

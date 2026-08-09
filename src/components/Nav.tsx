@@ -48,7 +48,7 @@ export function Nav() {
               className="group relative font-heading text-[13px] font-semibold tracking-[0.08em] text-navy"
             >
               {link.label}
-              <span className="absolute -bottom-1 left-0 h-px w-0 bg-teal transition-all duration-300 group-hover:w-full" />
+              <span className="absolute -bottom-1 left-0 h-px w-0 bg-mint transition-all duration-300 group-hover:w-full" />
             </Link>
           ))}
         </nav>
@@ -56,7 +56,7 @@ export function Nav() {
         <div className="flex items-center gap-4">
           <Link
             href="/#contact"
-            className="hidden items-center gap-2 bg-navy px-5 py-2.5 font-heading text-[13px] font-semibold tracking-[0.08em] text-white transition-colors hover:bg-teal-dark lg:inline-flex"
+            className="hidden items-center gap-2 bg-navy px-5 py-2.5 font-heading text-[13px] font-semibold tracking-[0.08em] text-white transition-colors hover:bg-mint lg:inline-flex"
           >
             LET&apos;S TALK →
           </Link>

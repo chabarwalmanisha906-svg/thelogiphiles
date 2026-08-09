@@ -27,7 +27,7 @@ export function ContactSection({ settings }: { settings: SiteSettings }) {
           {settings.contactEmail && (
             <a
               href={`mailto:${settings.contactEmail}`}
-              className="mt-8 inline-block font-heading text-base font-semibold tracking-tight text-mint underline decoration-teal-dark/40 underline-offset-4 transition-colors hover:text-navy"
+              className="mt-8 inline-block font-heading text-base font-semibold tracking-tight text-mint underline decoration-mint/40 underline-offset-4 transition-colors hover:text-navy"
             >
               {settings.contactEmail}
             </a>

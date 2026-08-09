@@ -18,7 +18,7 @@ const SERVICES = [
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
 const inputClasses =
-  'w-full border-b border-navy/25 bg-transparent py-3 font-body text-navy placeholder:text-navy/40 focus:border-teal-dark outline-none transition-colors'
+  'w-full border-b border-navy/25 bg-transparent py-3 font-body text-navy placeholder:text-navy/40 focus:border-mint outline-none transition-colors'
 
 export function ContactForm() {
   const [status, setStatus] = useState<Status>('idle')
@@ -113,7 +113,7 @@ export function ContactForm() {
         type="submit"
         disabled={status === 'submitting'}
         data-cursor="LET'S TALK →"
-        className="mt-2 inline-flex w-fit items-center gap-2 bg-navy px-7 py-4 font-heading text-sm font-semibold tracking-[0.08em] text-white transition-colors hover:bg-teal-dark disabled:opacity-50"
+        className="mt-2 inline-flex w-fit items-center gap-2 bg-navy px-7 py-4 font-heading text-sm font-semibold tracking-[0.08em] text-white transition-colors hover:bg-mint disabled:opacity-50"
       >
         {status === 'submitting' ? 'SENDING…' : 'SEND IT OUR WAY →'}
       </button>

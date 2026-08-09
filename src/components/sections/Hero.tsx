@@ -61,14 +61,14 @@ export function Hero({ settings }: { settings: SiteSettings }) {
             <Link
               href="/work"
               data-cursor="EXPLORE →"
-              className="inline-flex items-center gap-2 bg-navy px-7 py-4 font-heading text-sm font-semibold tracking-[0.08em] text-white transition-colors hover:bg-teal-dark"
+              className="inline-flex items-center gap-2 bg-navy px-7 py-4 font-heading text-sm font-semibold tracking-[0.08em] text-white transition-colors hover:bg-mint"
             >
               SEE OUR WORK →
             </Link>
             <Link
               href="/#contact"
               data-cursor="LET'S TALK →"
-              className="inline-flex items-center gap-2 border-b-2 border-teal-dark font-heading text-sm font-semibold tracking-[0.08em] text-mint"
+              className="inline-flex items-center gap-2 border-b-2 border-mint font-heading text-sm font-semibold tracking-[0.08em] text-mint"
             >
               LET&apos;S TALK →
             </Link>

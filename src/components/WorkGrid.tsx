@@ -58,7 +58,7 @@ export function WorkGrid({ items }: { items: WorkItem[] }) {
             type="button"
             aria-label="Previous project"
             onClick={() => scrollToIndex(Math.max(active - 1, 0))}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-navy/20 font-heading text-navy transition-colors hover:border-teal-dark hover:text-mint"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-navy/20 font-heading text-navy transition-colors hover:border-mint hover:text-mint"
           >
             ←
           </button>
@@ -66,7 +66,7 @@ export function WorkGrid({ items }: { items: WorkItem[] }) {
             type="button"
             aria-label="Next project"
             onClick={() => scrollToIndex(Math.min(active + 1, items.length - 1))}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-navy/20 font-heading text-navy transition-colors hover:border-teal-dark hover:text-mint"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-navy/20 font-heading text-navy transition-colors hover:border-mint hover:text-mint"
           >
             →
           </button>
