@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform, type MotionValue } from 'framer-motion
 
 type ItemConfig = {
   src: string
-  width: number
+  height: number
   aspect: number
   xOffset: number
   startYOffset: number
@@ -16,10 +16,12 @@ type ItemConfig = {
   fadeOutStart: number
 }
 
+const TARGET_HEIGHT = 140
+
 const ITEMS: ItemConfig[] = [
   {
     src: '/falling-pen.png',
-    width: 22,
+    height: TARGET_HEIGHT,
     aspect: 841 / 163,
     xOffset: -40,
     startYOffset: -20,
@@ -31,7 +33,7 @@ const ITEMS: ItemConfig[] = [
   },
   {
     src: '/falling-pencil.png',
-    width: 24,
+    height: TARGET_HEIGHT,
     aspect: 968 / 114,
     xOffset: 0,
     startYOffset: 25,
@@ -43,7 +45,7 @@ const ITEMS: ItemConfig[] = [
   },
   {
     src: '/falling-marker.png',
-    width: 30,
+    height: TARGET_HEIGHT,
     aspect: 911 / 251,
     xOffset: 40,
     startYOffset: -40,
@@ -66,7 +68,7 @@ function FallingItem({
   range: Range
   scrollYProgress: MotionValue<number>
 }) {
-  const height = Math.round(item.width * item.aspect)
+  const width = Math.round(item.height / item.aspect)
   const top = useTransform(
     scrollYProgress,
     [0, 1],
@@ -100,8 +102,8 @@ function FallingItem({
         top,
         left,
         x: '-50%',
-        width: item.width,
-        height,
+        width,
+        height: item.height,
         rotate,
         opacity,
       }}
