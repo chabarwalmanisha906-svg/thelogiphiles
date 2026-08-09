@@ -53,7 +53,7 @@ export function Logo({
           The Logiphiles
         </span>
         <span
-          className={`mt-1 font-heading font-semibold uppercase leading-none tracking-[0.12em] text-teal-dark whitespace-nowrap ${TAGLINE_SIZE[variant]}`}
+          className={`mt-1 font-heading font-semibold uppercase leading-none tracking-[0.12em] text-mint whitespace-nowrap ${TAGLINE_SIZE[variant]}`}
         >
           {tagline}
         </span>

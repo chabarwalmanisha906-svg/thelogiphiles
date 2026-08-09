@@ -7,7 +7,7 @@ export function ContactSection({ settings }: { settings: SiteSettings }) {
     <section id="contact" className="scroll-mt-24 bg-offwhite px-6 py-28 md:px-10 md:py-36">
       <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-14 md:grid-cols-12 md:gap-10">
         <ScrollReveal className="md:col-span-6">
-          <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">
+          <span className="font-heading text-sm font-semibold tracking-[0.2em] text-mint">
             08 — CONTACT
           </span>
           <h2 className="mt-4 font-heading text-[clamp(2.5rem,7vw,6rem)] font-extrabold leading-[0.98] tracking-tight text-navy">
@@ -27,7 +27,7 @@ export function ContactSection({ settings }: { settings: SiteSettings }) {
           {settings.contactEmail && (
             <a
               href={`mailto:${settings.contactEmail}`}
-              className="mt-8 inline-block font-heading text-base font-semibold tracking-tight text-teal-dark underline decoration-teal-dark/40 underline-offset-4 transition-colors hover:text-navy"
+              className="mt-8 inline-block font-heading text-base font-semibold tracking-tight text-mint underline decoration-teal-dark/40 underline-offset-4 transition-colors hover:text-navy"
             >
               {settings.contactEmail}
             </a>

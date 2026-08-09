@@ -14,7 +14,7 @@ export function Credentials({ settings }: { settings: SiteSettings }) {
                 <p className="font-heading text-[clamp(2.25rem,5vw,3.5rem)] font-extrabold leading-none tracking-tight text-navy">
                   {stat.value || '—'}
                 </p>
-                <p className="font-heading text-xs font-semibold tracking-[0.2em] text-teal-dark sm:text-sm">
+                <p className="font-heading text-xs font-semibold tracking-[0.2em] text-mint sm:text-sm">
                   {stat.label.toUpperCase()}
                 </p>
               </div>

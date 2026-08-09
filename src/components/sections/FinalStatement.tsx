@@ -8,7 +8,7 @@ export function FinalStatement() {
           <p className="font-heading text-[clamp(2.25rem,7vw,6rem)] font-extrabold leading-[1.02] tracking-tight text-white">
             GOOD WORDS GET ATTENTION.
             <br />
-            RIGHT WORDS GET <span className="text-teal-dark">REMEMBERED.</span>
+            RIGHT WORDS GET <span className="text-mint">REMEMBERED.</span>
           </p>
         </ScrollReveal>
       </div>

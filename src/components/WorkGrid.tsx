@@ -49,7 +49,7 @@ export function WorkGrid({ items }: { items: WorkItem[] }) {
     <div>
       <div className="mb-8 flex items-center gap-6">
         <span className="font-heading text-sm font-semibold tracking-[0.15em] text-navy/50">
-          <span className="text-teal-dark">{String(active + 1).padStart(2, '0')}</span> /{' '}
+          <span className="text-mint">{String(active + 1).padStart(2, '0')}</span> /{' '}
           {String(items.length).padStart(2, '0')}
         </span>
 
@@ -58,7 +58,7 @@ export function WorkGrid({ items }: { items: WorkItem[] }) {
             type="button"
             aria-label="Previous project"
             onClick={() => scrollToIndex(Math.max(active - 1, 0))}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-navy/20 font-heading text-navy transition-colors hover:border-teal-dark hover:text-teal-dark"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-navy/20 font-heading text-navy transition-colors hover:border-teal-dark hover:text-mint"
           >
             ←
           </button>
@@ -66,7 +66,7 @@ export function WorkGrid({ items }: { items: WorkItem[] }) {
             type="button"
             aria-label="Next project"
             onClick={() => scrollToIndex(Math.min(active + 1, items.length - 1))}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-navy/20 font-heading text-navy transition-colors hover:border-teal-dark hover:text-teal-dark"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-navy/20 font-heading text-navy transition-colors hover:border-teal-dark hover:text-mint"
           >
             →
           </button>
@@ -108,14 +108,14 @@ export function WorkGrid({ items }: { items: WorkItem[] }) {
 
                 <div className="mt-5 flex items-start justify-between gap-4">
                   <div>
-                    <span className="font-heading text-xs font-semibold tracking-[0.15em] text-teal-dark">
+                    <span className="font-heading text-xs font-semibold tracking-[0.15em] text-mint">
                       {item.category}
                     </span>
-                    <h3 className="mt-1 font-heading text-2xl font-extrabold tracking-tight text-navy transition-colors duration-300 group-hover:text-teal-dark md:text-3xl">
+                    <h3 className="mt-1 font-heading text-2xl font-extrabold tracking-tight text-navy transition-colors duration-300 group-hover:text-mint md:text-3xl">
                       {item.title}
                     </h3>
                   </div>
-                  <span className="mt-2 shrink-0 font-heading text-xl text-navy/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-teal-dark">
+                  <span className="mt-2 shrink-0 font-heading text-xl text-navy/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-mint">
                     →
                   </span>
                 </div>

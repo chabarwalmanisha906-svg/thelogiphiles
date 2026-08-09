@@ -55,7 +55,7 @@ export function ContactForm() {
   if (status === 'success') {
     return (
       <div className="border-t border-navy/15 pt-8">
-        <p className="font-heading text-2xl font-extrabold tracking-tight text-teal-dark">
+        <p className="font-heading text-2xl font-extrabold tracking-tight text-mint">
           MESSAGE SENT.
         </p>
         <p className="mt-3 font-body text-navy/70">

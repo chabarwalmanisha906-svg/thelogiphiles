@@ -6,7 +6,7 @@ export function WhoWeAre() {
     <section id="who-we-are" className="scroll-mt-24 bg-offwhite px-6 py-28 md:px-10 md:py-36">
       <div className="mx-auto max-w-[1600px]">
         <ScrollReveal>
-          <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">
+          <span className="font-heading text-sm font-semibold tracking-[0.2em] text-mint">
             07 — WHO WE ARE
           </span>
           <h2 className="mt-4 font-heading text-[clamp(1.75rem,4vw,3rem)] font-extrabold leading-[1.05] tracking-tight text-navy">

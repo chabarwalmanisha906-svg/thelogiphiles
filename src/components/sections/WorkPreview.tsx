@@ -14,7 +14,7 @@ export function WorkPreview({ items }: { items: WorkItem[] }) {
       <div className="relative mx-auto max-w-[1600px]">
         <ScrollReveal className="mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">
+            <span className="font-heading text-sm font-semibold tracking-[0.2em] text-mint">
               04 — WORK
             </span>
             <h2 className="mt-4 font-heading text-[clamp(2.5rem,7vw,6rem)] font-extrabold leading-[0.98] tracking-tight text-navy">

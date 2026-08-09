@@ -18,7 +18,7 @@ export function Philosophy() {
               }`}
             >
               <span className="text-navy">{lines[0]} </span>
-              <span className="text-teal-dark">{lines[1]}</span>
+              <span className="text-mint">{lines[1]}</span>
             </p>
           </ScrollReveal>
         ))}

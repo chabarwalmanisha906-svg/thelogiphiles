@@ -115,7 +115,7 @@ export function Nav() {
                 <Link
                   href="/#contact"
                   onClick={() => setMenuOpen(false)}
-                  className="mt-4 inline-flex items-center gap-2 font-heading text-lg font-semibold text-teal-dark"
+                  className="mt-4 inline-flex items-center gap-2 font-heading text-lg font-semibold text-mint"
                 >
                   LET&apos;S TALK →
                 </Link>

@@ -32,7 +32,7 @@ export function TeamGrid({ items }: { items: TeamMemberItem[] }) {
             <h3 className="mt-4 font-heading text-lg font-extrabold tracking-tight text-navy">
               {member.name}
             </h3>
-            <p className="mt-1 font-body text-sm text-teal-dark">{member.role}</p>
+            <p className="mt-1 font-body text-sm text-mint">{member.role}</p>
           </>
         )
 

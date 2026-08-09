@@ -44,7 +44,7 @@ export function WhatWeDo() {
 
       <div className="relative mx-auto max-w-[1600px]">
         <ScrollReveal>
-          <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">
+          <span className="font-heading text-sm font-semibold tracking-[0.2em] text-mint">
             02 — SERVICES
           </span>
           <h2 className="mt-4 font-heading text-[clamp(2.5rem,7vw,6rem)] font-extrabold leading-[0.98] tracking-tight text-navy">
@@ -63,7 +63,7 @@ export function WhatWeDo() {
                   {service.number}
                 </span>
 
-                <h3 className="font-heading text-2xl font-extrabold tracking-tight text-navy transition-transform duration-300 group-hover:translate-x-2 group-hover:text-teal-dark sm:text-3xl md:col-span-4 md:text-4xl">
+                <h3 className="font-heading text-2xl font-extrabold tracking-tight text-navy transition-transform duration-300 group-hover:translate-x-2 group-hover:text-mint sm:text-3xl md:col-span-4 md:text-4xl">
                   {service.title}
                 </h3>
 
@@ -71,7 +71,7 @@ export function WhatWeDo() {
                   {service.items.join('  ·  ')}
                 </p>
 
-                <span className="font-heading text-xl text-navy/20 transition-all duration-300 group-hover:translate-x-2 group-hover:text-teal-dark md:col-span-1 md:text-right md:text-2xl">
+                <span className="font-heading text-xl text-navy/20 transition-all duration-300 group-hover:translate-x-2 group-hover:text-mint md:col-span-1 md:text-right md:text-2xl">
                   →
                 </span>
               </div>

@@ -29,7 +29,7 @@ export function Hero({ settings }: { settings: SiteSettings }) {
             <motion.span variants={reveal} custom={0.05} className="block text-navy">
               {settings.heroLineOne}
             </motion.span>
-            <motion.span variants={reveal} custom={0.2} className="block text-teal-dark">
+            <motion.span variants={reveal} custom={0.2} className="block text-mint">
               {settings.heroLineTwo}
             </motion.span>
           </motion.h1>
@@ -68,7 +68,7 @@ export function Hero({ settings }: { settings: SiteSettings }) {
             <Link
               href="/#contact"
               data-cursor="LET'S TALK →"
-              className="inline-flex items-center gap-2 border-b-2 border-teal-dark font-heading text-sm font-semibold tracking-[0.08em] text-teal-dark"
+              className="inline-flex items-center gap-2 border-b-2 border-teal-dark font-heading text-sm font-semibold tracking-[0.08em] text-mint"
             >
               LET&apos;S TALK →
             </Link>

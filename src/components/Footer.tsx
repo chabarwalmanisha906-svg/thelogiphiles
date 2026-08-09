@@ -32,7 +32,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             <p className="font-heading text-2xl font-extrabold leading-[1.1] tracking-tight md:text-4xl">
               YES, YOU ARE RIGHT;
               <br />
-              <span className="text-teal-dark">WE WRITE.</span>
+              <span className="text-mint">WE WRITE.</span>
             </p>
           </div>
 
@@ -41,7 +41,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
               <Link
                 key={link.label}
                 href={link.href}
-                className="font-heading text-[13px] font-semibold tracking-[0.08em] text-white/80 transition-colors hover:text-teal-dark"
+                className="font-heading text-[13px] font-semibold tracking-[0.08em] text-white/80 transition-colors hover:text-mint"
               >
                 {link.label.toUpperCase()}
               </Link>
@@ -61,7 +61,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
                 href={settings[key] || '#'}
                 target={settings[key] ? '_blank' : undefined}
                 rel="noopener noreferrer"
-                className="font-heading text-[13px] font-semibold tracking-[0.08em] text-white/80 transition-colors hover:text-teal-dark"
+                className="font-heading text-[13px] font-semibold tracking-[0.08em] text-white/80 transition-colors hover:text-mint"
               >
                 {label}
               </a>

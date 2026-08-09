@@ -42,13 +42,13 @@ export function InsightsGrid({ items }: { items: PostItem[] }) {
                 )}
               </div>
 
-              <div className="mt-5 flex items-center gap-3 font-heading text-xs font-semibold tracking-[0.15em] text-teal-dark">
+              <div className="mt-5 flex items-center gap-3 font-heading text-xs font-semibold tracking-[0.15em] text-mint">
                 {categoryName && <span>{categoryName.toUpperCase()}</span>}
                 {categoryName && <span className="text-navy/30">/</span>}
                 <span className="text-navy/50">{formatDate(post.publishedDate)}</span>
               </div>
 
-              <h3 className="mt-3 font-heading text-xl font-extrabold leading-tight tracking-tight text-navy transition-colors duration-300 group-hover:text-teal-dark sm:text-2xl">
+              <h3 className="mt-3 font-heading text-xl font-extrabold leading-tight tracking-tight text-navy transition-colors duration-300 group-hover:text-mint sm:text-2xl">
                 {post.title}
               </h3>
 

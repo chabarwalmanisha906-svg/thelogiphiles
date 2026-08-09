@@ -50,7 +50,7 @@ export default async function ArticlePage({
     <article className="px-6 pb-28 pt-40 md:px-10 md:pb-36 md:pt-48">
       <div className="mx-auto max-w-3xl">
         <ScrollReveal>
-          <div className="flex items-center gap-3 font-heading text-xs font-semibold tracking-[0.15em] text-teal-dark">
+          <div className="flex items-center gap-3 font-heading text-xs font-semibold tracking-[0.15em] text-mint">
             {categoryName && <span>{categoryName.toUpperCase()}</span>}
             {categoryName && <span className="text-navy/30">/</span>}
             <span className="text-navy/50">{formatDate(post.publishedDate)}</span>
