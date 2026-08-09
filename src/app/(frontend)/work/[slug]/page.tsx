@@ -180,12 +180,12 @@ export default async function WorkCaseStudyPage({
           className="group block border-t border-navy/10 bg-navy px-6 py-20 md:px-10 md:py-28"
         >
           <div className="mx-auto max-w-[1600px]">
-            <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal">
+            <span className="font-heading text-sm font-semibold tracking-[0.2em] text-teal-dark">
               NEXT PROJECT
             </span>
             <h2 className="mt-4 flex items-center gap-4 font-heading text-[clamp(2rem,5.5vw,4.5rem)] font-extrabold leading-[0.98] tracking-tight text-white transition-transform duration-300 group-hover:translate-x-3">
               {nextProject.title}
-              <span className="text-teal">→</span>
+              <span className="text-teal-dark">→</span>
             </h2>
           </div>
         </Link>

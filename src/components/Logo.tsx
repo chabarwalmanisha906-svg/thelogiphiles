@@ -29,7 +29,6 @@ export function Logo({
 }: LogoProps) {
   const iconSize = ICON_SIZE[variant]
   const textColor = variant === 'light' ? 'text-white' : 'text-navy'
-  const taglineColor = variant === 'light' ? 'text-teal' : 'text-teal-dark'
 
   return (
     <Link
@@ -54,7 +53,7 @@ export function Logo({
           The Logiphiles
         </span>
         <span
-          className={`mt-1 font-heading font-semibold uppercase leading-none tracking-[0.12em] whitespace-nowrap ${TAGLINE_SIZE[variant]} ${taglineColor}`}
+          className={`mt-1 font-heading font-semibold uppercase leading-none tracking-[0.12em] text-teal-dark whitespace-nowrap ${TAGLINE_SIZE[variant]}`}
         >
           {tagline}
         </span>
