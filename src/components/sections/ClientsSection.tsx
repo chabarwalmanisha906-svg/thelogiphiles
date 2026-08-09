@@ -11,55 +11,68 @@ const FALLBACK_CLIENTS = [
   { id: 'pr24x7', name: 'PR 24x7', src: '/clients/pr24x7.png' },
 ]
 
-export function ClientsSection({ clients }: { clients: ClientItem[] }) {
-  const hasCmsClients = clients.length > 0
+type LogoEntry = { key: string; alt: string; src: string; unoptimized?: boolean }
+
+function MarqueeRow({ logos, direction }: { logos: LogoEntry[]; direction: 'left' | 'right' }) {
+  const doubled = [...logos, ...logos]
 
   return (
-    <section className="border-t border-navy/10 bg-offwhite px-6 py-24 md:px-10 md:py-32">
-      <div className="mx-auto max-w-[1600px]">
+    <div className="no-scrollbar overflow-hidden border-y border-navy/10">
+      <div
+        className={`flex w-max shrink-0 items-stretch ${
+          direction === 'left' ? 'marquee-left' : 'marquee-right'
+        }`}
+      >
+        {doubled.map((logo, i) => (
+          <div
+            key={`${logo.key}-${i}`}
+            className="flex aspect-[3/2] w-[200px] shrink-0 items-center justify-center border-r border-navy/10 p-6 grayscale transition-all duration-300 hover:grayscale-0 sm:w-[240px]"
+          >
+            {logo.src && (
+              <Image
+                src={logo.src}
+                alt={logo.alt}
+                width={160}
+                height={56}
+                unoptimized={logo.unoptimized}
+                className="max-h-12 w-auto object-contain"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function ClientsSection({ clients }: { clients: ClientItem[] }) {
+  const logos: LogoEntry[] =
+    clients.length > 0
+      ? clients.map((client) => ({
+          key: client.id,
+          alt: mediaAlt(client.logo, client.name),
+          src: mediaUrl(client.logo) || '',
+        }))
+      : FALLBACK_CLIENTS.map((client) => ({
+          key: client.id,
+          alt: client.name,
+          src: client.src,
+          unoptimized: true,
+        }))
+
+  return (
+    <section className="border-t border-navy/10 bg-offwhite py-24 md:py-32">
+      <div className="mx-auto max-w-[1600px] px-6 md:px-10">
         <ScrollReveal>
           <h2 className="font-heading text-sm font-semibold tracking-[0.2em] text-navy/50">
             TRUSTED TO WRITE
           </h2>
         </ScrollReveal>
+      </div>
 
-        <div className="mt-10 grid grid-cols-2 border-l border-t border-navy/10 sm:grid-cols-3 md:grid-cols-5">
-          {hasCmsClients
-            ? clients.map((client) => {
-                const logoUrl = mediaUrl(client.logo)
-                return (
-                  <div
-                    key={client.id}
-                    className="flex aspect-[3/2] items-center justify-center border-b border-r border-navy/10 p-6 grayscale transition-all duration-300 hover:grayscale-0"
-                  >
-                    {logoUrl && (
-                      <Image
-                        src={logoUrl}
-                        alt={mediaAlt(client.logo, client.name)}
-                        width={160}
-                        height={56}
-                        className="max-h-12 w-auto object-contain"
-                      />
-                    )}
-                  </div>
-                )
-              })
-            : FALLBACK_CLIENTS.map((client) => (
-                <div
-                  key={client.id}
-                  className="flex aspect-[3/2] items-center justify-center border-b border-r border-navy/10 p-6 grayscale transition-all duration-300 hover:grayscale-0"
-                >
-                  <Image
-                    src={client.src}
-                    alt={client.name}
-                    width={160}
-                    height={56}
-                    unoptimized
-                    className="max-h-12 w-auto object-contain"
-                  />
-                </div>
-              ))}
-        </div>
+      <div className="mt-10 flex flex-col gap-4">
+        <MarqueeRow logos={logos} direction="left" />
+        <MarqueeRow logos={logos} direction="right" />
       </div>
     </section>
   )
