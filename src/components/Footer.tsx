@@ -65,7 +65,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             © {year} The Logiphiles. All rights reserved.
           </p>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-x-10 md:-translate-x-[280px]">
             {SOCIAL_LINKS.map(({ label, key }) => (
               <a
                 key={key}

@@ -90,6 +90,12 @@ export function Hero({ settings }: { settings: SiteSettings }) {
             sizes="(min-width: 1024px) 46vw, 0px"
             className="object-contain"
           />
+          <span
+            id="hero-cup-anchor"
+            aria-hidden="true"
+            className="pointer-events-none absolute h-px w-px"
+            style={{ left: '29.5%', top: '42.7%' }}
+          />
         </motion.div>
       </div>
 
