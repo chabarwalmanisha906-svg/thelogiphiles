@@ -19,7 +19,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
   return (
     <footer className="bg-navy px-6 pb-10 pt-20 text-white md:px-10">
       <div className="relative mx-auto max-w-[1600px]">
-        <div className="flex flex-col items-center justify-between gap-10 border-b border-white/15 pb-14 md:flex-row md:items-end md:gap-6">
+        <div className="flex flex-col items-center justify-between gap-10 pb-10 md:flex-row md:items-end md:gap-6">
           <div>
             <Logo variant="light" className="mb-8" tagline="Copywriting agency" />
             <p className="font-heading text-2xl font-extrabold leading-[1.1] tracking-tight md:text-4xl">
