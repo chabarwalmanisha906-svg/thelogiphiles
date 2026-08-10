@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Montserrat, Manrope } from 'next/font/google'
+import { Montserrat, Manrope, Caveat } from 'next/font/google'
 import '../(frontend)/globals.css'
 
 const montserrat = Montserrat({
@@ -14,6 +14,12 @@ const manrope = Manrope({
   weight: ['400', '500', '600'],
 })
 
+const caveat = Caveat({
+  variable: '--font-caveat',
+  subsets: ['latin'],
+  weight: ['500'],
+})
+
 export const metadata: Metadata = {
   title: 'HRM | The Logiphiles',
   robots: { index: false, follow: false },
@@ -21,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function HrmLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${montserrat.variable} ${manrope.variable}`}>
+    <html lang="en" className={`${montserrat.variable} ${manrope.variable} ${caveat.variable}`}>
       <body className="min-h-full bg-offwhite text-navy antialiased">{children}</body>
     </html>
   )

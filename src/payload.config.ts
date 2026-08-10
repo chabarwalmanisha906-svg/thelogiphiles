@@ -15,6 +15,7 @@ import { Enquiries } from './collections/Enquiries'
 import { TeamMembers } from './collections/TeamMembers'
 import { Employees } from './collections/Employees'
 import { Attendance } from './collections/Attendance'
+import { Tasks } from './collections/Tasks'
 import { SiteSettings } from './globals/SiteSettings'
 
 const filename = fileURLToPath(import.meta.url)
@@ -38,6 +39,7 @@ export default buildConfig({
     TeamMembers,
     Employees,
     Attendance,
+    Tasks,
   ],
   globals: [SiteSettings],
   editor: lexicalEditor({}),

@@ -66,9 +66,18 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           />
         </div>
 
-        <p className="pt-8 text-center font-body text-sm text-white/60 md:text-left">
-          © {year} The Logiphiles. All rights reserved.
-        </p>
+        <div className="flex flex-col items-center justify-between gap-3 pt-8 text-center font-body text-sm text-white/60 md:flex-row md:text-left">
+          <p>© {year} The Logiphiles. All rights reserved.</p>
+          <div className="flex items-center gap-4 text-white/40">
+            <Link href="/hrm/login" className="transition-colors hover:text-mint">
+              Staff Login
+            </Link>
+            <span className="text-white/20">|</span>
+            <Link href="/admin" className="transition-colors hover:text-mint">
+              Admin
+            </Link>
+          </div>
+        </div>
       </div>
     </footer>
   )
