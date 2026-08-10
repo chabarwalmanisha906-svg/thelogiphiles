@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Montserrat, Manrope } from 'next/font/google'
+import { Montserrat, Manrope, Caveat } from 'next/font/google'
 import './globals.css'
 import { Nav } from '@/components/Nav'
 import { Footer } from '@/components/Footer'
@@ -17,6 +17,12 @@ const manrope = Manrope({
   variable: '--font-manrope',
   subsets: ['latin'],
   weight: ['400', '500', '600'],
+});
+
+const caveat = Caveat({
+  variable: '--font-caveat',
+  subsets: ['latin'],
+  weight: ['500', '600'],
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -55,7 +61,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
   const settings = await getSiteSettings()
 
   return (
-    <html lang="en" className={`${montserrat.variable} ${manrope.variable}`}>
+    <html lang="en" className={`${montserrat.variable} ${manrope.variable} ${caveat.variable}`}>
       <body className="min-h-full bg-offwhite text-navy antialiased">
         <CustomCursor />
         <FallingPencil />

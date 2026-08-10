@@ -47,7 +47,8 @@ export type TeamMemberItem = {
   id: string
   name: string
   role: string
-  photo: { url?: string | null; alt?: string | null } | string
+  photo?: { url?: string | null; alt?: string | null } | string
+  icon?: 'pen' | 'lightbulb' | 'language' | 'zap'
   linkedinUrl?: string | null
   bio?: string | null
   visible?: boolean | null
@@ -378,6 +379,41 @@ export async function getClients(): Promise<ClientItem[]> {
   }
 }
 
+export const FALLBACK_TEAM: TeamMemberItem[] = [
+  {
+    id: 'alex-carter',
+    name: 'Alex Carter',
+    role: 'Founder & Lead Copywriter',
+    icon: 'pen',
+    bio: 'The one who rewrites sentences fifteen times before breakfast. Alex ensures every brand voice is authentic.',
+    order: 1,
+  },
+  {
+    id: 'samira-khan',
+    name: 'Samira Khan',
+    role: 'Brand Strategist',
+    icon: 'lightbulb',
+    bio: 'Translating abstract ideas into actionable content pillars. Samira builds the skeleton of every good story.',
+    order: 2,
+  },
+  {
+    id: 'julian-reyes',
+    name: 'Julian Reyes',
+    role: 'Localization Expert',
+    icon: 'language',
+    bio: "Making sure humor and tone don't get lost in translation. Julian adapts our work for global audiences.",
+    order: 3,
+  },
+  {
+    id: 'priya-patel',
+    name: 'Priya Patel',
+    role: 'Ad & Conversion Copywriter',
+    icon: 'zap',
+    bio: 'Obsessed with click-through rates. Priya writes the short, punchy copy that makes people take action.',
+    order: 4,
+  },
+]
+
 export async function getTeamMembers(): Promise<TeamMemberItem[]> {
   try {
     const payload = await getPayloadClient()
@@ -388,8 +424,8 @@ export async function getTeamMembers(): Promise<TeamMemberItem[]> {
       limit: 50,
       depth: 1,
     })
-    return result.docs as unknown as TeamMemberItem[]
+    return result.docs.length > 0 ? (result.docs as unknown as TeamMemberItem[]) : FALLBACK_TEAM
   } catch {
-    return []
+    return FALLBACK_TEAM
   }
 }

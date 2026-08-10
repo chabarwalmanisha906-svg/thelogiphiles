@@ -8,6 +8,7 @@
 
   --font-heading: var(--font-montserrat);
   --font-body: var(--font-manrope);
+  --font-hand: var(--font-caveat);
 
   --breakpoint-3xl: 1440px;
 }
