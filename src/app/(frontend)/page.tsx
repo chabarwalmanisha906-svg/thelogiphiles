@@ -1,4 +1,5 @@
 import { getClients, getPosts, getSiteSettings, getWork } from '@/lib/data'
+import { FallingPencil } from '@/components/FallingPencil'
 import { Hero } from '@/components/sections/Hero'
 import { WhatWeDo } from '@/components/sections/WhatWeDo'
 import { AdvertisingWriting } from '@/components/sections/AdvertisingWriting'
@@ -22,6 +23,7 @@ export default async function Home() {
 
   return (
     <>
+      <FallingPencil />
       <Hero settings={settings} />
       <WhatWeDo />
       <AdvertisingWriting />

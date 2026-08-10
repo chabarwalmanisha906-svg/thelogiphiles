@@ -4,7 +4,6 @@ import './globals.css'
 import { Nav } from '@/components/Nav'
 import { Footer } from '@/components/Footer'
 import { CustomCursor } from '@/components/CustomCursor'
-import { FallingPencil } from '@/components/FallingPencil'
 import { getSiteSettings } from '@/lib/data'
 
 const montserrat = Montserrat({
@@ -64,7 +63,6 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="en" className={`${montserrat.variable} ${manrope.variable} ${caveat.variable}`}>
       <body className="min-h-full bg-offwhite text-navy antialiased">
         <CustomCursor />
-        <FallingPencil />
         <Nav />
         <main>{children}</main>
         <Footer settings={settings} />
