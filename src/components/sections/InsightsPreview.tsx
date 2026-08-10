@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import type { PostItem } from '@/lib/data'
-import { InsightsGrid } from '@/components/InsightsGrid'
+import { InsightsCarousel } from '@/components/InsightsCarousel'
 import { ScrollReveal } from '@/components/ScrollReveal'
 import { GhostHeading } from '@/components/GhostHeading'
 
 export function InsightsPreview({ items }: { items: PostItem[] }) {
-  const preview = items.slice(0, 3)
+  const preview = items.slice(0, 4)
 
   return (
     <section className="relative overflow-hidden bg-offwhite px-6 py-28 md:px-10 md:py-36">
@@ -37,7 +37,7 @@ export function InsightsPreview({ items }: { items: PostItem[] }) {
           </Link>
         </ScrollReveal>
 
-        <InsightsGrid items={preview} />
+        <InsightsCarousel items={preview} />
       </div>
     </section>
   )

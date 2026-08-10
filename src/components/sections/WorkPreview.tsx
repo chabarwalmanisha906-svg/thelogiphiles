@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { WorkItem } from '@/lib/data'
-import { WorkGrid } from '@/components/WorkGrid'
+import { WorkCarousel } from '@/components/WorkCarousel'
 import { ScrollReveal } from '@/components/ScrollReveal'
 import { GhostHeading } from '@/components/GhostHeading'
 
@@ -37,7 +37,7 @@ export function WorkPreview({ items }: { items: WorkItem[] }) {
           </Link>
         </ScrollReveal>
 
-        <WorkGrid items={preview} />
+        <WorkCarousel items={preview} />
       </div>
     </section>
   )
