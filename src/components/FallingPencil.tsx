@@ -93,7 +93,7 @@ function FallingItem({
   const opacity = useTransform(
     scrollYProgress,
     [0, fadeInStart, fadeInEnd, item.fadeOutStart, 1],
-    [0, 0, 1, 1, 0],
+    [0, 0, 0.7, 0.7, 0],
   )
 
   return (
