@@ -17,7 +17,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-white/10 bg-navy px-6 pb-10 pt-20 text-white md:px-10">
+    <footer className="mt-8 bg-navy px-6 pb-10 pt-20 text-white md:mt-12 md:px-10">
       <div className="relative mx-auto max-w-[1600px]">
         <div className="flex flex-col items-center justify-between gap-10 pb-10 md:flex-row md:items-end md:gap-6">
           <div>
