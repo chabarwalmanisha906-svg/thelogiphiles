@@ -27,6 +27,12 @@ export default buildConfig({
     meta: {
       titleSuffix: '- The Logiphiles CMS',
     },
+    components: {
+      graphics: {
+        Logo: '/src/components/admin/AdminLogo#AdminLogo',
+        Icon: '/src/components/admin/AdminIcon#AdminIcon',
+      },
+    },
   },
   collections: [
     Users,
