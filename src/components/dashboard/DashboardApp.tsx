@@ -21,6 +21,9 @@ import {
   Search,
   LogOut,
   MessageCircle,
+  PenLine,
+  Briefcase,
+  UploadCloud,
 } from 'lucide-react'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 import {
@@ -48,6 +51,14 @@ const NAV = [
     items: [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }],
   },
   {
+    group: 'Content Management',
+    items: [
+      { id: 'insights', label: 'Insights (Blogs)', icon: PenLine },
+      { id: 'casestudies', label: 'Case Studies', icon: Briefcase },
+      { id: 'team', label: 'Manage Team', icon: Users },
+    ],
+  },
+  {
     group: 'Business',
     items: [
       { id: 'business', label: 'Command Center', icon: Building2 },
@@ -65,9 +76,8 @@ const NAV = [
     ],
   },
   {
-    group: 'People & Work',
+    group: 'HR Management',
     items: [
-      { id: 'team', label: 'Team', icon: Users },
       { id: 'messages', label: 'Messages', icon: MessageCircle },
       { id: 'attendance', label: 'Attendance', icon: Clock },
       { id: 'leaves', label: 'Leaves', icon: CalendarMinus },
@@ -76,6 +86,49 @@ const NAV = [
     ],
   },
 ]
+
+const WORK_CATEGORIES = ['ADVERTISING', 'BRAND', 'CONTENT', 'EDITORIAL', 'LANGUAGE']
+
+function lexicalFromText(text: string) {
+  return {
+    root: {
+      type: 'root',
+      format: '',
+      indent: 0,
+      version: 1,
+      direction: 'ltr',
+      children: text
+        .split('\n')
+        .filter((line) => line.trim())
+        .map((line) => ({
+          type: 'paragraph',
+          format: '',
+          indent: 0,
+          version: 1,
+          direction: 'ltr',
+          children: [{ mode: 'normal', text: line, type: 'text', style: '', detail: 0, format: 0, version: 1 }],
+        })),
+    },
+  }
+}
+
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+
+async function uploadMedia(file: File, alt: string): Promise<string> {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('_payload', JSON.stringify({ alt }))
+  const res = await fetch('/api/media', { method: 'POST', credentials: 'include', body: form })
+  if (!res.ok) throw new Error('Image upload failed')
+  const data = await res.json()
+  return String(data.doc.id)
+}
 
 function formatDate(v?: string | null) {
   if (!v) return '—'
@@ -243,6 +296,8 @@ function Shell() {
 
         <div className="p-9">
           {page === 'dashboard' && <DashboardPage me={me} employees={employees} clients={clients} toast={toast} setPage={setPage} />}
+          {page === 'insights' && <InsightsAdminPage search={search} toast={toast} />}
+          {page === 'casestudies' && <CaseStudiesAdminPage search={search} toast={toast} />}
           {page === 'business' && <BusinessPage clients={clients} toast={toast} />}
           {page === 'clients' && (
             <ClientsPage clients={clients} search={search} toast={toast} refresh={refreshClients} />
@@ -1804,6 +1859,356 @@ function ActivityPage({ employees }: { employees: Doc[] }) {
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+/* ============================== INSIGHTS (BLOGS) ============================== */
+
+function FilterTabs({ options, active, onChange }: { options: string[]; active: string; onChange: (v: string) => void }) {
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-2">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className={`rounded-full px-5 py-2.5 font-heading text-[11px] font-extrabold uppercase tracking-wide transition-colors ${
+            active === opt ? 'bg-mint text-white' : 'text-navy hover:text-mint'
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function InsightsAdminPage({ search, toast }: { search: string; toast: (m: string) => void }) {
+  const [posts, setPosts] = useState<Doc[]>([])
+  const [categories, setCategories] = useState<Doc[]>([])
+  const [filter, setFilter] = useState('ALL')
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    const [p, c] = await Promise.all([api('/posts?limit=200&sort=-publishedDate&depth=1'), api('/categories?limit=100')])
+    setPosts(p.docs || [])
+    setCategories(c.docs || [])
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const categoryNames = categories.map((c) => c.name.toUpperCase())
+  const filtered = posts.filter((p) => {
+    const matchesFilter = filter === 'ALL' || relLabel(p.category).toUpperCase() === filter
+    const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase())
+    return matchesFilter && matchesSearch
+  })
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    const form = new FormData(e.currentTarget)
+    try {
+      const file = (form.get('featuredImage') as File) || null
+      if (!file || file.size === 0) throw new Error('Please choose a featured image')
+      const title = String(form.get('title'))
+      const mediaId = await uploadMedia(file, title)
+      await api('/posts', {
+        method: 'POST',
+        body: JSON.stringify({
+          title,
+          slug: slugify(title),
+          category: form.get('category'),
+          publishedDate: new Date().toISOString(),
+          featuredImage: mediaId,
+          excerpt: form.get('excerpt'),
+          content: lexicalFromText(String(form.get('content') || '')),
+          _status: form.get('status'),
+        }),
+      })
+      toast('Insight published successfully!')
+      setOpen(false)
+      await load()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to publish insight')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <SectionHead
+        title="Insights & Blog Posts"
+        subtitle="Manage, write, and publish thought leadership articles for the website."
+        action={
+          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+            + Write New Insight
+          </button>
+        }
+      />
+
+      <FilterTabs options={['ALL', ...categoryNames]} active={filter} onChange={setFilter} />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-3">
+        <StatCard label="Total Published" value={posts.filter((p) => p._status === 'published').length} />
+        <StatCard label="Drafts" value={posts.filter((p) => p._status === 'draft').length} />
+        <StatCard label="Total Insights" value={posts.length} />
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[760px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Title', 'Category', 'Author', 'Date', 'Status', ''].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((p) => (
+              <tr key={p.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5 font-bold text-navy">{p.title}</td>
+                <td className="px-4 py-3.5 uppercase text-navy/70">{relLabel(p.category)}</td>
+                <td className="px-4 py-3.5 text-navy/70">{p.author}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatDate(p.publishedDate)}</td>
+                <td className="px-4 py-3.5">
+                  <Badge color={p._status === 'published' ? 'green' : 'yellow'}>{p._status}</Badge>
+                </td>
+                <td className="px-4 py-3.5">
+                  <a
+                    href={`/cms/collections/posts/${p.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
+                  >
+                    Edit
+                  </a>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No insights yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Write New Insight (Blog)">
+        {categories.length === 0 ? (
+          <p className="font-body text-sm text-navy/60">
+            No categories exist yet — create one first in{' '}
+            <a href="/cms/collections/categories/create" target="_blank" rel="noopener noreferrer" className="font-bold text-mint underline">
+              CMS Admin
+            </a>
+            , then come back here.
+          </p>
+        ) : (
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <Field label="Article title">
+              <input name="title" required placeholder="E.g., The Future of AI in Copywriting" className={inputClass} />
+            </Field>
+            <Field label="Category">
+              <select name="category" required className={inputClass}>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Featured image">
+              <label className="flex cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed border-navy/15 bg-offwhite/60 p-6 text-center hover:border-mint">
+                <UploadCloud size={24} className="text-mint" />
+                <span className="font-body text-[13px] font-bold text-navy">Click to upload image</span>
+                <span className="font-body text-[11px] text-navy/40">JPG, PNG, WEBP</span>
+                <input type="file" name="featuredImage" accept="image/*" required className="hidden" />
+              </label>
+            </Field>
+            <Field label="Excerpt">
+              <textarea name="excerpt" rows={2} required className={inputClass} />
+            </Field>
+            <Field label="Content body">
+              <textarea name="content" rows={6} required placeholder="Write your blog post content here…" className={inputClass} />
+            </Field>
+            <Field label="Status">
+              <select name="status" defaultValue="published" className={inputClass}>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </Field>
+            <button disabled={saving} className="mt-1 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
+              {saving ? 'Publishing…' : 'Publish Insight'}
+            </button>
+          </form>
+        )}
+      </Modal>
+    </div>
+  )
+}
+
+/* ============================== CASE STUDIES (WORK) ============================== */
+
+function CaseStudiesAdminPage({ search, toast }: { search: string; toast: (m: string) => void }) {
+  const [items, setItems] = useState<Doc[]>([])
+  const [filter, setFilter] = useState('ALL')
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    const data = await api('/work?limit=200&sort=order')
+    setItems(data.docs || [])
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const filtered = items.filter((w) => {
+    const matchesFilter = filter === 'ALL' || w.category.toUpperCase().includes(filter)
+    const matchesSearch = w.title.toLowerCase().includes(search.toLowerCase()) || (w.client || '').toLowerCase().includes(search.toLowerCase())
+    return matchesFilter && matchesSearch
+  })
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    const form = new FormData(e.currentTarget)
+    try {
+      const file = (form.get('coverImage') as File) || null
+      if (!file || file.size === 0) throw new Error('Please choose a cover image')
+      const title = String(form.get('title'))
+      const mediaId = await uploadMedia(file, title)
+      await api('/work', {
+        method: 'POST',
+        body: JSON.stringify({
+          title,
+          slug: slugify(title),
+          client: form.get('client'),
+          category: form.get('category'),
+          description: form.get('description'),
+          coverImage: mediaId,
+          challenge: lexicalFromText(String(form.get('challenge') || '')),
+        }),
+      })
+      toast('Case study added successfully!')
+      setOpen(false)
+      await load()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to save case study')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <SectionHead
+        title="Case Studies"
+        subtitle="Showcase your best work, problems solved, and the impact created for clients."
+        action={
+          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+            + Add Case Study
+          </button>
+        }
+      />
+
+      <FilterTabs options={['ALL', ...WORK_CATEGORIES]} active={filter} onChange={setFilter} />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-3">
+        <StatCard label="Live Case Studies" value={items.length} />
+        <StatCard label="Featured" value={items.filter((w) => w.featured).length} />
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[760px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Client', 'Project Title', 'Category', 'Featured', ''].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((w) => (
+              <tr key={w.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5 font-bold text-navy">{w.client || '—'}</td>
+                <td className="px-4 py-3.5 text-navy/70">{w.title}</td>
+                <td className="px-4 py-3.5 uppercase text-navy/70">{w.category}</td>
+                <td className="px-4 py-3.5">
+                  {w.featured ? <Badge color="green">Featured</Badge> : <span className="text-navy/30">—</span>}
+                </td>
+                <td className="px-4 py-3.5">
+                  <a
+                    href={`/cms/collections/work/${w.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
+                  >
+                    View / Edit
+                  </a>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No case studies yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Add New Case Study">
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Client name">
+              <input name="client" required placeholder="E.g., HealthKeyz" className={inputClass} />
+            </Field>
+            <Field label="Project title">
+              <input name="title" required placeholder="E.g., Scaling digital presence" className={inputClass} />
+            </Field>
+          </div>
+          <Field label="Category tag">
+            <select name="category" required className={inputClass}>
+              {WORK_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Cover image">
+            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed border-navy/15 bg-offwhite/60 p-6 text-center hover:border-mint">
+              <UploadCloud size={24} className="text-mint" />
+              <span className="font-body text-[13px] font-bold text-navy">Click to upload image</span>
+              <input type="file" name="coverImage" accept="image/*" required className="hidden" />
+            </label>
+          </Field>
+          <Field label="Short description (shown on Work grid)">
+            <textarea name="description" rows={2} required className={inputClass} />
+          </Field>
+          <Field label="The Challenge">
+            <textarea name="challenge" rows={4} placeholder="Describe the problem…" className={inputClass} />
+          </Field>
+          <button disabled={saving} className="mt-1 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
+            {saving ? 'Saving…' : 'Save Case Study'}
+          </button>
+        </form>
+      </Modal>
     </div>
   )
 }
