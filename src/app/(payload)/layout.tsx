@@ -4,7 +4,7 @@ import type { ServerFunctionClient } from 'payload'
 import React from 'react'
 
 import './custom.css'
-import { importMap } from './admin/importMap'
+import { importMap } from './cms/importMap'
 
 type Args = {
   children: React.ReactNode

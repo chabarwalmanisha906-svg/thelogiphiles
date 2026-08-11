@@ -60,6 +60,9 @@ export default buildConfig({
     Messages,
   ],
   globals: [SiteSettings],
+  routes: {
+    admin: '/cms',
+  },
   editor: lexicalEditor({}),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

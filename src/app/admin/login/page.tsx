@@ -28,7 +28,7 @@ export default function DashboardLoginPage() {
         throw new Error(data?.errors?.[0]?.message || 'Invalid email or password')
       }
 
-      router.push('/dashboard/home')
+      router.push('/admin/home')
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')

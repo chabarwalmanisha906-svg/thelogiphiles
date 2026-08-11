@@ -111,7 +111,7 @@ function Shell() {
         const meRes = await fetch('/api/users/me', { credentials: 'include' })
         const meData = await meRes.json().catch(() => null)
         if (!meRes.ok || !meData?.user) {
-          router.push('/dashboard/login')
+          router.push('/admin/login')
           return
         }
         setMe(meData.user)
@@ -122,7 +122,7 @@ function Shell() {
         setEmployees(empData.docs || [])
         setClients(clientData.docs || [])
       } catch {
-        router.push('/dashboard/login')
+        router.push('/admin/login')
         return
       } finally {
         setLoading(false)
@@ -142,7 +142,7 @@ function Shell() {
 
   async function handleLogout() {
     await fetch('/api/users/logout', { method: 'POST', credentials: 'include' })
-    router.push('/dashboard/login')
+    router.push('/admin/login')
   }
 
   if (loading || !me) {
@@ -199,7 +199,7 @@ function Shell() {
             Database &amp; System
           </p>
           <a
-            href="/admin"
+            href="/cms"
             className="flex items-center gap-3 rounded-md px-3 py-2.5 font-heading text-[12px] font-semibold text-white/70 transition-colors hover:bg-white/10 hover:text-white"
           >
             <Database size={16} className="text-mint" /> CMS Admin
