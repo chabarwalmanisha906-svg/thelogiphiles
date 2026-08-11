@@ -1234,7 +1234,7 @@ function PaymentsPage({ clients, search, toast }: { clients: Doc[]; search: stri
         method: 'POST',
         body: JSON.stringify({
           invoiceNumber: form.get('invoiceNumber'),
-          client: form.get('client'),
+          client: Number(form.get('client')),
           amount: Number(form.get('amount')),
           issuedDate: new Date().toISOString(),
           dueDate: new Date(String(form.get('dueDate'))).toISOString(),
@@ -1684,8 +1684,8 @@ function TasksPage({
         method: 'POST',
         body: JSON.stringify({
           title: form.get('title'),
-          employee: form.get('employee'),
-          client: form.get('client') || undefined,
+          employee: Number(form.get('employee')),
+          client: form.get('client') ? Number(form.get('client')) : undefined,
           deadline: new Date(String(form.get('deadline'))).toISOString(),
           priority: form.get('priority'),
           description: form.get('description'),
@@ -1921,9 +1921,9 @@ function InsightsAdminPage({ search, toast }: { search: string; toast: (m: strin
         body: JSON.stringify({
           title,
           slug: slugify(title),
-          category: form.get('category'),
+          category: Number(form.get('category')),
           publishedDate: new Date().toISOString(),
-          featuredImage: mediaId,
+          featuredImage: Number(mediaId),
           excerpt: form.get('excerpt'),
           content: lexicalFromText(String(form.get('content') || '')),
           _status: form.get('status'),
@@ -2096,7 +2096,7 @@ function CaseStudiesAdminPage({ search, toast }: { search: string; toast: (m: st
           client: form.get('client'),
           category: form.get('category'),
           description: form.get('description'),
-          coverImage: mediaId,
+          coverImage: Number(mediaId),
           challenge: lexicalFromText(String(form.get('challenge') || '')),
         }),
       })

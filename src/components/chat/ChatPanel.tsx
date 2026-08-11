@@ -100,7 +100,7 @@ export function ChatPanel({ me }: { me: Me }) {
     if (!text.trim() || !activeId) return
     const body = text
     setText('')
-    await api('/messages', { method: 'POST', body: JSON.stringify({ conversation: activeId, text: body }) })
+    await api('/messages', { method: 'POST', body: JSON.stringify({ conversation: Number(activeId), text: body }) })
     await loadMessages(activeId)
   }
 
