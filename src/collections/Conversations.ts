@@ -16,7 +16,7 @@ export const Conversations: CollectionConfig = {
       if (!req.user) return false
       return { memberKeys: { equals: `${req.user.collection}:${req.user.id}` } }
     },
-    delete: () => false,
+    delete: ({ req }) => req.user?.collection === 'users',
   },
   fields: [
     { name: 'title', type: 'text' },

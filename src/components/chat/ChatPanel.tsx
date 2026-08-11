@@ -73,19 +73,26 @@ export function ChatPanel({ me }: { me: Me }) {
 
   async function openContact(contact: Contact) {
     setPickerOpen(false)
-    const existing = conversations.find(
-      (c) => !c.isGroup && (c.memberKeys || []).length === 2 && (c.memberKeys || []).includes(contact.key) && (c.memberKeys || []).includes(meKey),
+    // Always re-check against the server (not local state, which may still be loading)
+    // to avoid creating duplicate conversations on a fast double-click.
+    const fresh = await api(`/conversations?where[memberKeys][equals]=${encodeURIComponent(meKey)}&limit=100&sort=-createdAt`)
+    const freshList: Doc[] = fresh.docs || []
+    const existing = freshList.find(
+      (c) => !c.isGroup && (c.memberKeys || []).length === 2 && (c.memberKeys || []).includes(contact.key),
     )
+    let target: Doc
     if (existing) {
-      setActiveId(String(existing.id))
-      return
+      target = existing
+    } else {
+      const created = await api('/conversations', {
+        method: 'POST',
+        body: JSON.stringify({ isGroup: false, memberKeys: [meKey, contact.key] }),
+      })
+      target = created.doc
+      freshList.unshift(target)
     }
-    const created = await api('/conversations', {
-      method: 'POST',
-      body: JSON.stringify({ isGroup: false, memberKeys: [meKey, contact.key] }),
-    })
-    await loadConversations()
-    setActiveId(String(created.doc.id))
+    setConversations(freshList)
+    setActiveId(String(target.id))
   }
 
   async function handleSend(e: React.FormEvent) {
@@ -109,7 +116,7 @@ export function ChatPanel({ me }: { me: Me }) {
     })
     toast('Group created successfully!')
     setGroupOpen(false)
-    await loadConversations()
+    setConversations((prev) => [created.doc, ...prev])
     setActiveId(String(created.doc.id))
   }
 
