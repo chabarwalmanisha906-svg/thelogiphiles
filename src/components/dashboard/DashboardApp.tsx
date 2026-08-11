@@ -242,7 +242,7 @@ function Shell() {
         </header>
 
         <div className="p-9">
-          {page === 'dashboard' && <DashboardPage employees={employees} clients={clients} toast={toast} setPage={setPage} />}
+          {page === 'dashboard' && <DashboardPage me={me} employees={employees} clients={clients} toast={toast} setPage={setPage} />}
           {page === 'business' && <BusinessPage clients={clients} toast={toast} />}
           {page === 'clients' && (
             <ClientsPage clients={clients} search={search} toast={toast} refresh={refreshClients} />
@@ -275,12 +275,21 @@ function Shell() {
 
 /* ============================== DASHBOARD ============================== */
 
+function greeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
 function DashboardPage({
+  me,
   employees,
   clients,
   toast,
   setPage,
 }: {
+  me: Doc
   employees: Doc[]
   clients: Doc[]
   toast: (m: string) => void
@@ -323,9 +332,22 @@ function DashboardPage({
   const newThisWeek = enquiries.filter((e) => new Date(e.createdAt).getTime() > weekAgo).length
   const hotLeads = enquiries.filter((e) => ['proposal', 'negotiation'].includes(e.stage)).length
 
+  const firstName = (me.name || me.email || '').split(' ')[0]
+
   return (
     <div>
-      <SectionHead title="Command Center" subtitle="Everything happening across The Logiphiles, in one place." />
+      <SectionHead
+        title={`${greeting()}, ${firstName}.`}
+        subtitle="Everything happening across The Logiphiles, in one place."
+        action={
+          <button
+            onClick={() => setPage('tasks')}
+            className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy"
+          >
+            + Assign Task
+          </button>
+        }
+      />
 
       <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-5">
         <StatCard label="Team Members" value={employees.length} trend={`${employees.filter((e) => e.active).length} active`} />
