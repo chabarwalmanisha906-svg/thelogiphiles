@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url'
 import { buildConfig } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import sharp from 'sharp'
 
 import { Users } from './collections/Users'
@@ -77,4 +78,18 @@ export default buildConfig({
   }),
   sharp,
   cors: [process.env.NEXT_PUBLIC_SITE_URL || ''].filter(Boolean),
+  plugins: [
+    // Local disk storage doesn't persist on Vercel's serverless filesystem — route
+    // uploads to Vercel Blob instead. Falls back to local disk if the token isn't
+    // set yet (e.g. in local dev without a linked Blob store).
+    vercelBlobStorage({
+      enabled: true,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+      collections: {
+        media: true,
+        'employee-files': true,
+        'chat-attachments': true,
+      },
+    }),
+  ],
 })
