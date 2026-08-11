@@ -1,0 +1,1787 @@
+'use client'
+
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+  LayoutDashboard,
+  Building2,
+  Handshake,
+  RefreshCw,
+  Inbox,
+  MailOpen,
+  IndianRupee,
+  FileText,
+  Users,
+  Clock,
+  CalendarMinus,
+  ListChecks,
+  LogIn as LogInIcon,
+  Database,
+  ExternalLink,
+  Search,
+  LogOut,
+  MessageCircle,
+} from 'lucide-react'
+import { ChatPanel } from '@/components/chat/ChatPanel'
+import {
+  api,
+  formatINR,
+  relId,
+  relLabel,
+  useToast,
+  ToastProvider,
+  StatCard,
+  Badge,
+  Card,
+  Modal,
+  Field,
+  inputClass,
+  Progress,
+  SectionHead,
+} from './ui'
+
+type Doc = Record<string, any>
+
+const NAV = [
+  {
+    group: 'Overview',
+    items: [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }],
+  },
+  {
+    group: 'Business',
+    items: [
+      { id: 'business', label: 'Command Center', icon: Building2 },
+      { id: 'clients', label: 'Clients', icon: Handshake },
+      { id: 'client360', label: 'Client 360°', icon: RefreshCw },
+      { id: 'enquiries', label: 'New Enquiries', icon: Inbox },
+      { id: 'pitch', label: 'Pitch CRM', icon: MailOpen },
+    ],
+  },
+  {
+    group: 'Finance',
+    items: [
+      { id: 'sales', label: 'Sales & Revenue', icon: IndianRupee },
+      { id: 'payments', label: 'Payments', icon: FileText },
+    ],
+  },
+  {
+    group: 'People & Work',
+    items: [
+      { id: 'team', label: 'Team', icon: Users },
+      { id: 'messages', label: 'Messages', icon: MessageCircle },
+      { id: 'attendance', label: 'Attendance', icon: Clock },
+      { id: 'leaves', label: 'Leaves', icon: CalendarMinus },
+      { id: 'tasks', label: 'Tasks & Progress', icon: ListChecks },
+      { id: 'activity', label: 'Logs', icon: LogInIcon },
+    ],
+  },
+]
+
+function formatDate(v?: string | null) {
+  if (!v) return '—'
+  return new Date(v).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function initials(name?: string) {
+  if (!name) return '?'
+  return name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('')
+}
+
+export default function DashboardApp() {
+  return (
+    <ToastProvider>
+      <Shell />
+    </ToastProvider>
+  )
+}
+
+function Shell() {
+  const router = useRouter()
+  const toast = useToast()
+  const [me, setMe] = useState<Doc | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState('dashboard')
+  const [search, setSearch] = useState('')
+  const [employees, setEmployees] = useState<Doc[]>([])
+  const [clients, setClients] = useState<Doc[]>([])
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const meRes = await fetch('/api/users/me', { credentials: 'include' })
+        const meData = await meRes.json().catch(() => null)
+        if (!meRes.ok || !meData?.user) {
+          router.push('/dashboard/login')
+          return
+        }
+        setMe(meData.user)
+        const [empData, clientData] = await Promise.all([
+          api('/employees?limit=200&sort=name'),
+          api('/clients?limit=200&sort=name'),
+        ])
+        setEmployees(empData.docs || [])
+        setClients(clientData.docs || [])
+      } catch {
+        router.push('/dashboard/login')
+        return
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [router])
+
+  const refreshEmployees = useCallback(async () => {
+    const data = await api('/employees?limit=200&sort=name')
+    setEmployees(data.docs || [])
+  }, [])
+
+  const refreshClients = useCallback(async () => {
+    const data = await api('/clients?limit=200&sort=name')
+    setClients(data.docs || [])
+  }, [])
+
+  async function handleLogout() {
+    await fetch('/api/users/logout', { method: 'POST', credentials: 'include' })
+    router.push('/dashboard/login')
+  }
+
+  if (loading || !me) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="font-body text-sm text-navy/50">Loading…</p>
+      </main>
+    )
+  }
+
+  return (
+    <div className="grid min-h-screen grid-cols-[260px_1fr] bg-offwhite text-navy">
+      <aside className="flex flex-col overflow-y-auto bg-navy px-5 py-6 text-white">
+        <div className="mb-6 flex items-center gap-3 border-b border-white/10 pb-5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-mint font-heading text-lg font-black text-white">
+            L
+          </span>
+          <div className="flex flex-col leading-tight">
+            <span className="font-heading text-[15px] font-extrabold">The Logiphiles</span>
+            <span className="font-heading text-[9px] font-bold uppercase tracking-[0.15em] text-mint">
+              Super Admin
+            </span>
+          </div>
+        </div>
+
+        <nav className="flex flex-1 flex-col gap-1">
+          {NAV.map((group) => (
+            <div key={group.group}>
+              <p className="mb-1.5 mt-4 px-2.5 font-heading text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/40 first:mt-0">
+                {group.group}
+              </p>
+              {group.items.map((item) => {
+                const Icon = item.icon
+                const active = page === item.id
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setPage(item.id)}
+                    className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 font-heading text-[12px] font-semibold transition-colors ${
+                      active
+                        ? 'border-l-4 border-mint bg-white/10 pl-2 text-white'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <Icon size={16} /> {item.label}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+
+          <p className="mb-1.5 mt-4 px-2.5 font-heading text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/40">
+            Database &amp; System
+          </p>
+          <a
+            href="/admin"
+            className="flex items-center gap-3 rounded-md px-3 py-2.5 font-heading text-[12px] font-semibold text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <Database size={16} className="text-mint" /> CMS Admin
+            <ExternalLink size={11} className="ml-auto" />
+          </a>
+        </nav>
+      </aside>
+
+      <main
+        className="overflow-y-auto"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(14,50,108,0.06) 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }}
+      >
+        <header className="sticky top-0 z-10 flex h-[70px] items-center justify-between border-b border-navy/10 bg-white px-8">
+          <div className="flex w-[350px] items-center gap-2 rounded-md border border-navy/10 bg-offwhite px-3.5 py-2.5">
+            <Search size={15} className="text-navy/40" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search team, client, task…"
+              className="w-full bg-transparent font-body text-sm text-navy placeholder:text-navy/40 focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="font-heading text-[13px] font-bold text-navy">{me.name || me.email}</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-mint bg-navy font-heading text-xs font-bold text-white">
+              {initials(me.name || me.email)}
+            </span>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Sign out"
+              className="text-navy/40 transition-colors hover:text-red-600"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
+        </header>
+
+        <div className="p-9">
+          {page === 'dashboard' && <DashboardPage employees={employees} clients={clients} toast={toast} setPage={setPage} />}
+          {page === 'business' && <BusinessPage clients={clients} toast={toast} />}
+          {page === 'clients' && (
+            <ClientsPage clients={clients} search={search} toast={toast} refresh={refreshClients} />
+          )}
+          {page === 'client360' && <Client360Page clients={clients} />}
+          {page === 'enquiries' && <EnquiriesPage search={search} toast={toast} />}
+          {page === 'pitch' && <PitchPage search={search} toast={toast} />}
+          {page === 'sales' && <SalesPage />}
+          {page === 'payments' && <PaymentsPage clients={clients} search={search} toast={toast} />}
+          {page === 'team' && (
+            <TeamPage employees={employees} search={search} toast={toast} refresh={refreshEmployees} />
+          )}
+          {page === 'messages' && (
+            <div>
+              <SectionHead title="Team Messages & Meets" subtitle="Communicate directly with your team, create groups, or start video calls." />
+              <ChatPanel me={{ id: String(me.id), collection: 'users', name: me.name || me.email }} />
+            </div>
+          )}
+          {page === 'attendance' && <AttendancePage search={search} />}
+          {page === 'leaves' && <LeavesPage employees={employees} toast={toast} />}
+          {page === 'tasks' && (
+            <TasksPage employees={employees} clients={clients} search={search} toast={toast} />
+          )}
+          {page === 'activity' && <ActivityPage employees={employees} />}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+/* ============================== DASHBOARD ============================== */
+
+function DashboardPage({
+  employees,
+  clients,
+  toast,
+  setPage,
+}: {
+  employees: Doc[]
+  clients: Doc[]
+  toast: (m: string) => void
+  setPage: (p: string) => void
+}) {
+  const [tasks, setTasks] = useState<Doc[]>([])
+  const [leaves, setLeaves] = useState<Doc[]>([])
+  const [attendanceToday, setAttendanceToday] = useState<Doc[]>([])
+  const [enquiries, setEnquiries] = useState<Doc[]>([])
+
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    ;(async () => {
+      const [t, l, a, e] = await Promise.all([
+        api('/tasks?limit=200'),
+        api('/leaves?where[status][equals]=pending&limit=50'),
+        api(`/attendance?where[day][equals]=${today}&limit=200`),
+        api('/enquiries?limit=200&sort=-createdAt'),
+      ])
+      setTasks(t.docs || [])
+      setLeaves(l.docs || [])
+      setAttendanceToday(a.docs || [])
+      setEnquiries(e.docs || [])
+    })()
+  }, [])
+
+  const openTasks = tasks.filter((t) => t.status !== 'completed').length
+  const activeClients = clients.filter((c) => c.status === 'active').length
+  const pipeline = enquiries
+    .filter((e) => !['won', 'lost'].includes(e.stage))
+    .reduce((sum, e) => sum + (e.value || 0), 0)
+
+  const statusCounts = ['todo', 'in-progress', 'review', 'completed'].map((s) => ({
+    label: { todo: 'To Do', 'in-progress': 'In Progress', review: 'Review', completed: 'Completed' }[s],
+    count: tasks.filter((t) => t.status === s).length,
+  }))
+  const totalTasks = tasks.length || 1
+
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const newThisWeek = enquiries.filter((e) => new Date(e.createdAt).getTime() > weekAgo).length
+  const hotLeads = enquiries.filter((e) => ['proposal', 'negotiation'].includes(e.stage)).length
+
+  return (
+    <div>
+      <SectionHead title="Command Center" subtitle="Everything happening across The Logiphiles, in one place." />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-5">
+        <StatCard label="Team Members" value={employees.length} trend={`${employees.filter((e) => e.active).length} active`} />
+        <StatCard label="Present Today" value={attendanceToday.length} />
+        <StatCard label="Open Tasks" value={openTasks} />
+        <StatCard label="Active Clients" value={activeClients} />
+        <StatCard label="Sales Pipeline" value={formatINR(pipeline)} />
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-[1.5fr_1fr]">
+        <Card title="Task Workload">
+          <div className="grid gap-3">
+            {statusCounts.map((s) => (
+              <div key={s.label}>
+                <div className="mb-1 flex justify-between font-body text-xs font-semibold text-navy/70">
+                  <span>{s.label}</span>
+                  <span>{s.count}</span>
+                </div>
+                <Progress pct={(s.count / totalTasks) * 100} />
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card title={`Pending Approvals (${leaves.length})`}>
+          {leaves.length === 0 ? (
+            <p className="font-body text-sm text-navy/50">No pending leave requests.</p>
+          ) : (
+            <div className="grid gap-3">
+              {leaves.slice(0, 5).map((l) => (
+                <div key={l.id} className="flex items-center justify-between border-b border-navy/10 pb-2.5 font-body text-sm">
+                  <span>
+                    {relLabel(l.employee)} · {l.type}
+                  </span>
+                  <button
+                    onClick={() => setPage('leaves')}
+                    className="rounded-md bg-mint/10 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-mint"
+                  >
+                    Review
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <Card title="New Enquiries">
+          <div className="flex gap-3">
+            <MiniKpi value={newThisWeek} label="This week" />
+            <MiniKpi value={hotLeads} label="Hot leads" />
+          </div>
+        </Card>
+        <Card title="Team Today">
+          <div className="flex gap-3">
+            <MiniKpi value={attendanceToday.length} label="Checked in" />
+            <MiniKpi value={attendanceToday.filter((a) => !a.checkOutTime).length} label="Active now" />
+          </div>
+        </Card>
+        <Card title="Pipeline">
+          <div className="flex gap-3">
+            <MiniKpi value={formatINR(pipeline)} label="Open value" />
+            <MiniKpi value={enquiries.filter((e) => e.stage === 'won').length} label="Won" />
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+function MiniKpi({ value, label }: { value: ReactNode; label: string }) {
+  return (
+    <div className="flex-1 rounded-md border border-navy/10 bg-offwhite/60 p-4">
+      <b className="block font-heading text-xl font-black text-navy">{value}</b>
+      <small className="font-body text-[10px] font-bold uppercase tracking-wide text-navy/40">{label}</small>
+    </div>
+  )
+}
+
+/* ============================== BUSINESS COMMAND CENTER ============================== */
+
+function BusinessPage({ clients, toast }: { clients: Doc[]; toast: (m: string) => void }) {
+  const [enquiries, setEnquiries] = useState<Doc[]>([])
+  const [invoices, setInvoices] = useState<Doc[]>([])
+  const [tasks, setTasks] = useState<Doc[]>([])
+  const [leaves, setLeaves] = useState<Doc[]>([])
+
+  useEffect(() => {
+    ;(async () => {
+      const [e, i, t, l] = await Promise.all([
+        api('/enquiries?limit=200'),
+        api('/invoices?limit=200'),
+        api('/tasks?limit=200'),
+        api('/leaves?where[status][equals]=pending&limit=50'),
+      ])
+      setEnquiries(e.docs || [])
+      setInvoices(i.docs || [])
+      setTasks(t.docs || [])
+      setLeaves(l.docs || [])
+    })()
+  }, [])
+
+  const funnel = ['new', 'contacted', 'discovery', 'proposal', 'negotiation', 'won'].map((stage) => ({
+    stage,
+    count: enquiries.filter((e) => e.stage === stage).length,
+  }))
+  const receivables = invoices.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.amount, 0)
+  const overdueInvoices = invoices.filter((i) => i.status === 'overdue')
+  const overdueTasks = tasks.filter((t) => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'completed')
+  const hotEnquiries = enquiries.filter((e) => ['proposal', 'negotiation'].includes(e.stage))
+  const revenueMTD = invoices
+    .filter((i) => i.status === 'paid' && new Date(i.issuedDate).getMonth() === new Date().getMonth())
+    .reduce((s, i) => s + i.amount, 0)
+  const pipeline = enquiries.filter((e) => !['won', 'lost'].includes(e.stage)).reduce((s, e) => s + (e.value || 0), 0)
+  const collectionRate = invoices.length
+    ? Math.round((invoices.filter((i) => i.status === 'paid').length / invoices.length) * 100)
+    : 0
+  const completedTasks = tasks.length ? Math.round((tasks.filter((t) => t.status === 'completed').length / tasks.length) * 100) : 0
+  const healthy = clients.filter((c) => c.status === 'active').length
+  const atRisk = clients.filter((c) => c.status === 'at-risk').length
+
+  return (
+    <div>
+      <SectionHead title="Business Command Center" subtitle="One view of revenue, pipeline, delivery, clients and cash." />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-5">
+        <StatCard label="Revenue MTD" value={formatINR(revenueMTD)} />
+        <StatCard label="Receivables" value={formatINR(receivables)} trend={`${invoices.filter((i) => i.status !== 'paid').length} invoices`} />
+        <StatCard label="Sales Pipeline" value={formatINR(pipeline)} />
+        <StatCard label="Active Clients" value={clients.filter((c) => c.status === 'active').length} />
+        <StatCard label="Task Completion" value={`${completedTasks}%`} />
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <Card title="Company Funnel">
+          <div className="grid gap-2.5">
+            {funnel.map((f) => (
+              <div key={f.stage} className="flex justify-between border-b border-navy/10 pb-2.5 font-body text-sm capitalize">
+                <span>{f.stage}</span>
+                <b>{f.count}</b>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card title="Management Alerts">
+          <div className="grid gap-2.5 font-body text-sm">
+            <div className="flex items-center justify-between border-b border-navy/10 pb-2.5">
+              <span>{overdueInvoices.length} invoices overdue</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-navy/10 pb-2.5">
+              <span>{leaves.length} leave requests pending</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-navy/10 pb-2.5">
+              <span>{overdueTasks.length} tasks overdue</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>{hotEnquiries.length} hot enquiries</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <Card title="Delivery Health">
+          <MiniKpi value={`${completedTasks}%`} label="Tasks complete" />
+        </Card>
+        <Card title="Client Health">
+          <div className="flex gap-3">
+            <MiniKpi value={healthy} label="Healthy" />
+            <MiniKpi value={atRisk} label="At risk" />
+          </div>
+        </Card>
+        <Card title="Cash Health">
+          <div className="flex gap-3">
+            <MiniKpi value={`${collectionRate}%`} label="Collection rate" />
+            <MiniKpi value={formatINR(overdueInvoices.reduce((s, i) => s + i.amount, 0))} label="Overdue" />
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+/* ============================== CLIENTS ============================== */
+
+function ClientsPage({
+  clients,
+  search,
+  toast,
+  refresh,
+}: {
+  clients: Doc[]
+  search: string
+  toast: (m: string) => void
+  refresh: () => Promise<void>
+}) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const filtered = clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    const form = new FormData(e.currentTarget)
+    try {
+      await api('/clients', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: form.get('name'),
+          industry: form.get('industry'),
+          value: Number(form.get('value')) || 0,
+          status: form.get('status'),
+          onboardedDate: new Date().toISOString(),
+          visible: false,
+        }),
+      })
+      toast('Client added')
+      setOpen(false)
+      await refresh()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to add client')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <SectionHead
+        title="Clients"
+        subtitle="Onboarded clients, industries and account value."
+        action={
+          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+            + Onboard Client
+          </button>
+        }
+      />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+        <StatCard label="Total" value={clients.length} />
+        <StatCard label="Active" value={clients.filter((c) => c.status === 'active').length} />
+        <StatCard label="Onboarding" value={clients.filter((c) => c.status === 'onboarding').length} />
+        <StatCard label="At Risk" value={clients.filter((c) => c.status === 'at-risk').length} />
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[700px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Client', 'Industry', 'Onboarded', 'Value', 'Status'].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((c) => (
+              <tr key={c.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5 font-bold text-navy">{c.name}</td>
+                <td className="px-4 py-3.5 text-navy/70">{c.industry || '—'}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatDate(c.onboardedDate)}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatINR(c.value)}</td>
+                <td className="px-4 py-3.5">
+                  <Badge color={c.status === 'active' ? 'green' : c.status === 'at-risk' ? 'red' : 'yellow'}>
+                    {c.status || 'active'}
+                  </Badge>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No clients yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Onboard Client">
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <Field label="Client name">
+            <input name="name" required className={inputClass} />
+          </Field>
+          <Field label="Industry">
+            <input name="industry" className={inputClass} />
+          </Field>
+          <Field label="Monthly value (₹)">
+            <input name="value" type="number" className={inputClass} />
+          </Field>
+          <Field label="Status">
+            <select name="status" defaultValue="onboarding" className={inputClass}>
+              <option value="active">Active</option>
+              <option value="onboarding">Onboarding</option>
+              <option value="at-risk">At Risk</option>
+            </select>
+          </Field>
+          <button disabled={saving} className="mt-2 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
+            {saving ? 'Saving…' : 'Save Client'}
+          </button>
+        </form>
+      </Modal>
+    </div>
+  )
+}
+
+/* ============================== CLIENT 360 ============================== */
+
+function Client360Page({ clients }: { clients: Doc[] }) {
+  const [selected, setSelected] = useState<string>('')
+  const [tasks, setTasks] = useState<Doc[]>([])
+  const [invoices, setInvoices] = useState<Doc[]>([])
+
+  useEffect(() => {
+    if (clients.length && !selected) setSelected(String(clients[0].id))
+  }, [clients, selected])
+
+  useEffect(() => {
+    if (!selected) return
+    ;(async () => {
+      const [t, i] = await Promise.all([
+        api(`/tasks?where[client][equals]=${selected}&limit=100`),
+        api(`/invoices?where[client][equals]=${selected}&limit=100`),
+      ])
+      setTasks(t.docs || [])
+      setInvoices(i.docs || [])
+    })()
+  }, [selected])
+
+  const client = clients.find((c) => String(c.id) === selected)
+  const progressMap: Record<string, number> = { todo: 10, 'in-progress': 55, review: 80, completed: 100 }
+  const outstanding = invoices.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.amount, 0)
+  const timeline = [
+    ...tasks.map((t) => ({ date: t.createdAt, type: 'Task', activity: t.title, status: t.status })),
+    ...invoices.map((i) => ({ date: i.issuedDate, type: 'Invoice', activity: i.invoiceNumber, status: i.status })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  return (
+    <div>
+      <SectionHead
+        title="Client 360°"
+        subtitle="Complete client dashboard: projects, tasks and payments."
+        action={
+          <select value={selected} onChange={(e) => setSelected(e.target.value)} className={`${inputClass} w-64`}>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        }
+      />
+
+      {client && (
+        <>
+          <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+            <StatCard label="Client Value" value={formatINR(client.value)} />
+            <StatCard label="Tasks" value={tasks.length} trend={`${tasks.filter((t) => t.status === 'completed').length} completed`} />
+            <StatCard label="Outstanding" value={formatINR(outstanding)} />
+            <StatCard label="Client Health" value={client.status || 'active'} />
+          </div>
+
+          <div className="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <Card title="Project Progress">
+              {tasks.length === 0 ? (
+                <p className="font-body text-sm text-navy/50">No tasks linked to this client yet.</p>
+              ) : (
+                <div className="grid gap-3">
+                  {tasks.map((t) => (
+                    <div key={t.id}>
+                      <div className="mb-1 flex justify-between font-body text-xs font-semibold text-navy/70">
+                        <span>{t.title}</span>
+                        <span>{progressMap[t.status]}%</span>
+                      </div>
+                      <Progress pct={progressMap[t.status]} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+            <Card title="Client Snapshot">
+              <div className="grid gap-2.5 font-body text-sm">
+                <div className="flex justify-between border-b border-navy/10 pb-2.5">
+                  <span className="text-navy/50">Industry</span>
+                  <b>{client.industry || '—'}</b>
+                </div>
+                <div className="flex justify-between border-b border-navy/10 pb-2.5">
+                  <span className="text-navy/50">Onboarded</span>
+                  <b>{formatDate(client.onboardedDate)}</b>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-navy/50">Status</span>
+                  <b className="capitalize">{client.status}</b>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <Card title="Client Timeline">
+            <div className="grid gap-2.5">
+              {timeline.length === 0 && <p className="font-body text-sm text-navy/50">No activity yet.</p>}
+              {timeline.map((row, i) => (
+                <div key={i} className="flex items-center justify-between border-b border-navy/10 pb-2.5 font-body text-sm last:border-0">
+                  <span className="text-navy/50">{formatDate(row.date)}</span>
+                  <span>{row.type}</span>
+                  <span className="flex-1 px-3">{row.activity}</span>
+                  <Badge color="blue">{row.status}</Badge>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+/* ============================== ENQUIRIES ============================== */
+
+const STAGE_OPTIONS = [
+  { value: 'new', label: 'New' },
+  { value: 'contacted', label: 'Contacted' },
+  { value: 'discovery', label: 'Discovery' },
+  { value: 'proposal', label: 'Proposal Sent' },
+  { value: 'negotiation', label: 'Negotiation' },
+  { value: 'won', label: 'Won' },
+  { value: 'lost', label: 'Lost' },
+]
+
+function EnquiriesPage({ search, toast }: { search: string; toast: (m: string) => void }) {
+  const [enquiries, setEnquiries] = useState<Doc[]>([])
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    const data = await api('/enquiries?limit=200&sort=-createdAt')
+    setEnquiries(data.docs || [])
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const filtered = enquiries.filter((e) => e.name.toLowerCase().includes(search.toLowerCase()) || (e.company || '').toLowerCase().includes(search.toLowerCase()))
+
+  async function updateStage(id: string, stage: string) {
+    setEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, stage } : e)))
+    await api(`/enquiries/${id}`, { method: 'PATCH', body: JSON.stringify({ stage }) })
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    const form = new FormData(e.currentTarget)
+    try {
+      await api('/enquiries', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: form.get('name'),
+          email: form.get('email'),
+          company: form.get('company'),
+          service: form.get('service'),
+          message: form.get('message') || 'Added manually via dashboard.',
+          value: Number(form.get('value')) || 0,
+        }),
+      })
+      toast('Enquiry added to pipeline')
+      setOpen(false)
+      await load()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to add enquiry')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <SectionHead
+        title="New Enquiries"
+        subtitle="Capture, qualify and convert every incoming lead."
+        action={
+          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+            + Add Enquiry
+          </button>
+        }
+      />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+        <StatCard label="New" value={enquiries.filter((e) => e.stage === 'new').length} />
+        <StatCard label="Contacted" value={enquiries.filter((e) => e.stage === 'contacted').length} />
+        <StatCard label="Proposal" value={enquiries.filter((e) => e.stage === 'proposal').length} />
+        <StatCard label="Pipeline" value={formatINR(enquiries.reduce((s, e) => s + (e.value || 0), 0))} />
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[760px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Lead', 'Company', 'Service', 'Value', 'Stage'].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((e) => (
+              <tr key={e.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5 font-bold text-navy">{e.name}</td>
+                <td className="px-4 py-3.5 text-navy/70">{e.company || '—'}</td>
+                <td className="px-4 py-3.5 text-navy/70">{e.service || '—'}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatINR(e.value)}</td>
+                <td className="px-4 py-3.5">
+                  <select
+                    value={e.stage}
+                    onChange={(ev) => updateStage(e.id, ev.target.value)}
+                    className="rounded-md border border-navy/15 bg-white px-2 py-1.5 font-body text-xs font-semibold text-navy"
+                  >
+                    {STAGE_OPTIONS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No enquiries yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Add Enquiry">
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <Field label="Lead name">
+            <input name="name" required className={inputClass} />
+          </Field>
+          <Field label="Email">
+            <input name="email" type="email" required className={inputClass} />
+          </Field>
+          <Field label="Company">
+            <input name="company" className={inputClass} />
+          </Field>
+          <Field label="Service">
+            <input name="service" className={inputClass} />
+          </Field>
+          <Field label="Estimated value (₹)">
+            <input name="value" type="number" className={inputClass} />
+          </Field>
+          <button disabled={saving} className="mt-2 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
+            {saving ? 'Saving…' : 'Add to Pipeline'}
+          </button>
+        </form>
+      </Modal>
+    </div>
+  )
+}
+
+/* ============================== PITCH CRM ============================== */
+
+function PitchPage({ search, toast }: { search: string; toast: (m: string) => void }) {
+  const [prospects, setProspects] = useState<Doc[]>([])
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    const data = await api('/pitch-prospects?limit=200')
+    setProspects(data.docs || [])
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const filtered = prospects.filter((p) => p.company.toLowerCase().includes(search.toLowerCase()))
+
+  async function updateStage(id: string, stage: string) {
+    setProspects((prev) => prev.map((p) => (p.id === id ? { ...p, stage } : p)))
+    await api(`/pitch-prospects/${id}`, { method: 'PATCH', body: JSON.stringify({ stage }) })
+  }
+
+  function composePitch(p: Doc) {
+    const email = p.email || prompt(`Email for ${p.decisionMaker} at ${p.company}:`, '')
+    if (!email) return
+    const subject = `A proposal for ${p.company} | The Logiphiles`
+    const body = `Hi ${p.decisionMaker},\n\nWe'd love to share a focused proposal for ${p.need || 'your project'}, tailored to ${p.company}.\n\nWould you be open to a short conversation this week?\n\nRegards,\nThe Logiphiles`
+    location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    const form = new FormData(e.currentTarget)
+    try {
+      await api('/pitch-prospects', {
+        method: 'POST',
+        body: JSON.stringify({
+          company: form.get('company'),
+          decisionMaker: form.get('decisionMaker'),
+          email: form.get('email'),
+          need: form.get('need'),
+          value: Number(form.get('value')) || 0,
+        }),
+      })
+      toast('Prospect added to Pitch CRM')
+      setOpen(false)
+      await load()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to add prospect')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <SectionHead
+        title="Pitch CRM"
+        subtitle="Prospects, follow-ups and pitch intelligence."
+        action={
+          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+            + Add Prospect
+          </button>
+        }
+      />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+        <StatCard label="Prospects" value={prospects.length} />
+        <StatCard label="Hot" value={prospects.filter((p) => p.stage === 'hot').length} />
+        <StatCard label="Proposals" value={prospects.filter((p) => p.stage === 'proposal').length} />
+        <StatCard label="Potential Value" value={formatINR(prospects.reduce((s, p) => s + (p.value || 0), 0))} />
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[820px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Prospect', 'Decision Maker', 'Need', 'Value', 'Follow-up', 'Stage', ''].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((p) => (
+              <tr key={p.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5 font-bold text-navy">{p.company}</td>
+                <td className="px-4 py-3.5 text-navy/70">{p.decisionMaker}</td>
+                <td className="px-4 py-3.5 text-navy/70">{p.need || '—'}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatINR(p.value)}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatDate(p.nextFollowUp)}</td>
+                <td className="px-4 py-3.5">
+                  <select
+                    value={p.stage}
+                    onChange={(ev) => updateStage(p.id, ev.target.value)}
+                    className="rounded-md border border-navy/15 bg-white px-2 py-1.5 font-body text-xs font-semibold text-navy"
+                  >
+                    {['to-pitch', 'hot', 'follow-up', 'proposal', 'won', 'lost'].map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="px-4 py-3.5">
+                  <button onClick={() => composePitch(p)} className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5">
+                    Email
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No prospects yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Add Pitch Prospect">
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <Field label="Company">
+            <input name="company" required className={inputClass} />
+          </Field>
+          <Field label="Decision maker">
+            <input name="decisionMaker" required className={inputClass} />
+          </Field>
+          <Field label="Email">
+            <input name="email" type="email" className={inputClass} />
+          </Field>
+          <Field label="Business need">
+            <input name="need" className={inputClass} />
+          </Field>
+          <Field label="Estimated value (₹)">
+            <input name="value" type="number" className={inputClass} />
+          </Field>
+          <button disabled={saving} className="mt-2 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
+            {saving ? 'Saving…' : 'Save Prospect'}
+          </button>
+        </form>
+      </Modal>
+    </div>
+  )
+}
+
+/* ============================== SALES & REVENUE ============================== */
+
+function SalesPage() {
+  const [invoices, setInvoices] = useState<Doc[]>([])
+  const [enquiries, setEnquiries] = useState<Doc[]>([])
+
+  useEffect(() => {
+    ;(async () => {
+      const [i, e] = await Promise.all([api('/invoices?limit=500'), api('/enquiries?limit=500')])
+      setInvoices(i.docs || [])
+      setEnquiries(e.docs || [])
+    })()
+  }, [])
+
+  const months = Array.from({ length: 6 }).map((_, i) => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - (5 - i))
+    return { key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleDateString('en-IN', { month: 'short' }) }
+  })
+  const monthlyRevenue = months.map((m) => ({
+    ...m,
+    total: invoices
+      .filter((i) => i.status === 'paid' && `${new Date(i.issuedDate).getFullYear()}-${new Date(i.issuedDate).getMonth()}` === m.key)
+      .reduce((s, i) => s + i.amount, 0),
+  }))
+  const maxRevenue = Math.max(1, ...monthlyRevenue.map((m) => m.total))
+
+  const won = enquiries.filter((e) => e.stage === 'won').length
+  const total = enquiries.length || 1
+  const conversion = Math.round((won / total) * 100)
+  const pipeline = enquiries.filter((e) => !['won', 'lost'].includes(e.stage)).reduce((s, e) => s + (e.value || 0), 0)
+  const revenueMTD = invoices
+    .filter((i) => i.status === 'paid' && new Date(i.issuedDate).getMonth() === new Date().getMonth())
+    .reduce((s, i) => s + i.amount, 0)
+  const avgDeal = won ? Math.round(enquiries.filter((e) => e.stage === 'won').reduce((s, e) => s + (e.value || 0), 0) / won) : 0
+
+  const funnelValue = STAGE_OPTIONS.filter((s) => !['won', 'lost'].includes(s.value)).map((s) => ({
+    label: s.label,
+    value: enquiries.filter((e) => e.stage === s.value).reduce((sum, e) => sum + (e.value || 0), 0),
+  }))
+
+  return (
+    <div>
+      <SectionHead title="Sales & Revenue" subtitle="Pipeline, won deals, monthly revenue and conversion." />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-5">
+        <StatCard label="This Month" value={formatINR(revenueMTD)} />
+        <StatCard label="Won Deals" value={won} />
+        <StatCard label="Pipeline" value={formatINR(pipeline)} />
+        <StatCard label="Conversion" value={`${conversion}%`} />
+        <StatCard label="Avg Deal" value={formatINR(avgDeal)} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <Card title="Monthly Revenue (Paid)">
+          <div className="flex h-52 items-end gap-4 pt-5">
+            {monthlyRevenue.map((m) => (
+              <div key={m.key} className="relative flex-1 rounded-t-md bg-mint transition-opacity hover:opacity-80" style={{ height: `${(m.total / maxRevenue) * 100}%`, minHeight: 4 }}>
+                <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 font-body text-[11px] font-semibold text-navy/50">{m.label}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card title="Pipeline by Stage">
+          <div className="grid gap-2.5">
+            {funnelValue.map((f) => (
+              <div key={f.label} className="flex justify-between border-b border-navy/10 pb-2.5 font-body text-sm">
+                <span>{f.label}</span>
+                <b>{formatINR(f.value)}</b>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+/* ============================== PAYMENTS ============================== */
+
+function PaymentsPage({ clients, search, toast }: { clients: Doc[]; search: string; toast: (m: string) => void }) {
+  const [invoices, setInvoices] = useState<Doc[]>([])
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    const data = await api('/invoices?limit=200')
+    setInvoices(data.docs || [])
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const filtered = invoices.filter((i) => i.invoiceNumber.toLowerCase().includes(search.toLowerCase()) || relLabel(i.client).toLowerCase().includes(search.toLowerCase()))
+
+  function sendReminder(inv: Doc) {
+    const email = prompt('Client email for payment reminder:', '')
+    if (!email) return
+    const client = relLabel(inv.client)
+    location.href = `mailto:${email}?subject=${encodeURIComponent('Payment reminder - ' + client)}&body=${encodeURIComponent(`Dear Client,\n\nThis is a gentle reminder regarding invoice ${inv.invoiceNumber} for ${client}.\n\nRegards,\nThe Logiphiles`)}`
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    const form = new FormData(e.currentTarget)
+    try {
+      await api('/invoices', {
+        method: 'POST',
+        body: JSON.stringify({
+          invoiceNumber: form.get('invoiceNumber'),
+          client: form.get('client'),
+          amount: Number(form.get('amount')),
+          issuedDate: new Date().toISOString(),
+          dueDate: new Date(String(form.get('dueDate'))).toISOString(),
+          status: form.get('status'),
+        }),
+      })
+      toast('Invoice saved')
+      setOpen(false)
+      await load()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to save invoice')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const collected = invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + i.amount, 0)
+  const pending = invoices.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.amount, 0)
+  const overdue = invoices.filter((i) => i.status === 'overdue').reduce((s, i) => s + i.amount, 0)
+
+  return (
+    <div>
+      <SectionHead
+        title="Payments & Collections"
+        subtitle="Invoices, payments received and outstanding dues."
+        action={
+          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+            + Add Invoice
+          </button>
+        }
+      />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+        <StatCard label="Collected" value={formatINR(collected)} />
+        <StatCard label="Pending" value={formatINR(pending)} />
+        <StatCard label="Overdue" value={formatINR(overdue)} />
+        <StatCard label="Total Invoices" value={invoices.length} />
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[760px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Invoice', 'Client', 'Amount', 'Due', 'Status', ''].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((inv) => (
+              <tr key={inv.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5 font-bold text-navy">{inv.invoiceNumber}</td>
+                <td className="px-4 py-3.5 text-navy/70">{relLabel(inv.client)}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatINR(inv.amount)}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatDate(inv.dueDate)}</td>
+                <td className="px-4 py-3.5">
+                  <Badge color={inv.status === 'paid' ? 'green' : inv.status === 'overdue' ? 'red' : 'yellow'}>{inv.status}</Badge>
+                </td>
+                <td className="px-4 py-3.5">
+                  {inv.status !== 'paid' && (
+                    <button onClick={() => sendReminder(inv)} className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5">
+                      Reminder
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No invoices yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Add Invoice">
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <Field label="Invoice number">
+            <input name="invoiceNumber" required className={inputClass} />
+          </Field>
+          <Field label="Client">
+            <select name="client" required className={inputClass}>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Amount (₹)">
+            <input name="amount" type="number" required className={inputClass} />
+          </Field>
+          <Field label="Due date">
+            <input name="dueDate" type="date" required className={inputClass} />
+          </Field>
+          <Field label="Status">
+            <select name="status" defaultValue="due" className={inputClass}>
+              <option value="due">Due</option>
+              <option value="paid">Paid</option>
+              <option value="overdue">Overdue</option>
+            </select>
+          </Field>
+          <button disabled={saving} className="mt-2 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
+            {saving ? 'Saving…' : 'Save Invoice'}
+          </button>
+        </form>
+      </Modal>
+    </div>
+  )
+}
+
+/* ============================== TEAM ============================== */
+
+function TeamPage({
+  employees,
+  search,
+  toast,
+  refresh,
+}: {
+  employees: Doc[]
+  search: string
+  toast: (m: string) => void
+  refresh: () => Promise<void>
+}) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [taskCounts, setTaskCounts] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    ;(async () => {
+      const data = await api('/tasks?limit=500')
+      const counts: Record<string, number> = {}
+      for (const t of data.docs || []) {
+        const id = relId(t.employee)
+        counts[id] = (counts[id] || 0) + 1
+      }
+      setTaskCounts(counts)
+    })()
+  }, [employees])
+
+  const filtered = employees.filter((e) => e.name.toLowerCase().includes(search.toLowerCase()))
+
+  function randomPassword() {
+    return Math.random().toString(36).slice(-6) + Math.floor(Math.random() * 90 + 10)
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    const form = new FormData(e.currentTarget)
+    const password = randomPassword()
+    try {
+      await api('/employees', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: form.get('name'),
+          email: form.get('email'),
+          password,
+          department: form.get('department'),
+          role: form.get('role'),
+        }),
+      })
+      toast(`Team member added. Temporary password: ${password}`)
+      setOpen(false)
+      await refresh()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to add team member')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <SectionHead
+        title="Team Management"
+        subtitle="Add and onboard employees, roles and departments."
+        action={
+          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+            + Add Team Member
+          </button>
+        }
+      />
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[760px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Member', 'Department', 'Role', 'Status', 'Tasks'].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((emp) => (
+              <tr key={emp.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5">
+                  <div className="flex items-center gap-3 font-bold text-navy">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-md bg-mint/10 font-heading text-xs font-extrabold text-mint">
+                      {initials(emp.name)}
+                    </span>
+                    {emp.name}
+                  </div>
+                </td>
+                <td className="px-4 py-3.5 text-navy/70">{emp.department || '—'}</td>
+                <td className="px-4 py-3.5 text-navy/70">{emp.role || '—'}</td>
+                <td className="px-4 py-3.5">
+                  <Badge color={emp.active ? 'green' : 'gray'}>{emp.active ? 'Active' : 'Inactive'}</Badge>
+                </td>
+                <td className="px-4 py-3.5 text-navy/70">{taskCounts[String(emp.id)] || 0}</td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No team members yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Add Team Member">
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <Field label="Name">
+            <input name="name" required className={inputClass} />
+          </Field>
+          <Field label="Email">
+            <input name="email" type="email" required className={inputClass} />
+          </Field>
+          <Field label="Department">
+            <input name="department" className={inputClass} />
+          </Field>
+          <Field label="Role / Designation">
+            <input name="role" required className={inputClass} />
+          </Field>
+          <p className="font-body text-xs text-navy/50">
+            A temporary password will be generated automatically and shown after saving.
+          </p>
+          <button disabled={saving} className="mt-2 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
+            {saving ? 'Creating…' : 'Create Member'}
+          </button>
+        </form>
+      </Modal>
+    </div>
+  )
+}
+
+/* ============================== ATTENDANCE ============================== */
+
+function AttendancePage({ search }: { search: string }) {
+  const [records, setRecords] = useState<Doc[]>([])
+
+  useEffect(() => {
+    ;(async () => {
+      const data = await api('/attendance?limit=100&sort=-day')
+      setRecords(data.docs || [])
+    })()
+  }, [])
+
+  const filtered = records.filter((r) => relLabel(r.employee).toLowerCase().includes(search.toLowerCase()))
+  const today = new Date().toISOString().slice(0, 10)
+  const todayRecords = records.filter((r) => r.day === today)
+
+  function hours(r: Doc) {
+    if (!r.checkInTime) return '—'
+    const end = r.checkOutTime ? new Date(r.checkOutTime) : new Date()
+    const ms = end.getTime() - new Date(r.checkInTime).getTime()
+    const h = Math.floor(ms / 3600000)
+    const m = Math.floor((ms % 3600000) / 60000)
+    return `${h}h ${m}m`
+  }
+
+  return (
+    <div>
+      <SectionHead title="Attendance" subtitle="Daily check-ins, hours and status." />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+        <StatCard label="Present Today" value={todayRecords.filter((r) => r.status === 'present').length} />
+        <StatCard label="Absent Today" value={todayRecords.filter((r) => r.status === 'absent').length} />
+        <StatCard label="On Leave" value={todayRecords.filter((r) => r.status === 'leave').length} />
+        <StatCard label="Half Day" value={todayRecords.filter((r) => r.status === 'half-day').length} />
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[760px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Employee', 'Date', 'Check In', 'Check Out', 'Hours', 'Status'].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.slice(0, 50).map((r) => (
+              <tr key={r.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5 font-bold text-navy">{relLabel(r.employee)}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatDate(r.day)}</td>
+                <td className="px-4 py-3.5 text-navy/70">{r.checkInTime ? new Date(r.checkInTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                <td className="px-4 py-3.5 text-navy/70">{r.checkOutTime ? new Date(r.checkOutTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                <td className="px-4 py-3.5 text-navy/70">{hours(r)}</td>
+                <td className="px-4 py-3.5">
+                  <Badge color={r.status === 'present' ? 'green' : r.status === 'absent' ? 'red' : 'yellow'}>{r.status}</Badge>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No attendance records yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+/* ============================== LEAVES ============================== */
+
+function LeavesPage({ employees, toast }: { employees: Doc[]; toast: (m: string) => void }) {
+  const [leaves, setLeaves] = useState<Doc[]>([])
+
+  const load = useCallback(async () => {
+    const data = await api('/leaves?limit=200')
+    setLeaves(data.docs || [])
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  async function act(id: string, status: 'approved' | 'rejected') {
+    setLeaves((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)))
+    await api(`/leaves/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) })
+    toast(`Leave ${status}`)
+  }
+
+  const pending = leaves.filter((l) => l.status === 'pending')
+
+  return (
+    <div>
+      <SectionHead title="Leave Management" subtitle="Approve or reject employee leave and WFH requests." />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+        <StatCard label="Pending" value={pending.length} />
+        <StatCard label="Approved" value={leaves.filter((l) => l.status === 'approved').length} />
+        <StatCard label="Rejected" value={leaves.filter((l) => l.status === 'rejected').length} />
+        <StatCard label="Total" value={leaves.length} />
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[760px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Employee', 'Type', 'From', 'To', 'Reason', 'Status', ''].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {leaves.map((l) => (
+              <tr key={l.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5 font-bold text-navy">{relLabel(l.employee)}</td>
+                <td className="px-4 py-3.5 capitalize text-navy/70">{l.type}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatDate(l.fromDate)}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatDate(l.toDate)}</td>
+                <td className="px-4 py-3.5 text-navy/70">{l.reason || '—'}</td>
+                <td className="px-4 py-3.5">
+                  {l.status === 'pending' ? (
+                    <div className="flex gap-2">
+                      <button onClick={() => act(l.id, 'approved')} className="rounded-md bg-mint/10 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-mint">
+                        Approve
+                      </button>
+                      <button onClick={() => act(l.id, 'rejected')} className="rounded-md bg-red-500/10 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-red-600">
+                        Reject
+                      </button>
+                    </div>
+                  ) : (
+                    <Badge color={l.status === 'approved' ? 'green' : 'red'}>{l.status}</Badge>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {leaves.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No leave requests yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+/* ============================== TASKS ============================== */
+
+function TasksPage({
+  employees,
+  clients,
+  search,
+  toast,
+}: {
+  employees: Doc[]
+  clients: Doc[]
+  search: string
+  toast: (m: string) => void
+}) {
+  const [tasks, setTasks] = useState<Doc[]>([])
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    const data = await api('/tasks?limit=300&sort=-createdAt')
+    setTasks(data.docs || [])
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const filtered = tasks.filter((t) => t.title.toLowerCase().includes(search.toLowerCase()))
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    const form = new FormData(e.currentTarget)
+    try {
+      await api('/tasks', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: form.get('title'),
+          employee: form.get('employee'),
+          client: form.get('client') || undefined,
+          deadline: new Date(String(form.get('deadline'))).toISOString(),
+          priority: form.get('priority'),
+          description: form.get('description'),
+        }),
+      })
+      toast('Task assigned successfully')
+      setOpen(false)
+      await load()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to assign task')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const progressMap: Record<string, number> = { todo: 10, 'in-progress': 55, review: 80, completed: 100 }
+
+  return (
+    <div>
+      <SectionHead
+        title="Tasks & Work Progress"
+        subtitle="Assign work, deadlines, priorities and monitor delivery."
+        action={
+          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+            + Assign Task
+          </button>
+        }
+      />
+
+      <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+        <StatCard label="Total" value={tasks.length} />
+        <StatCard label="In Progress" value={tasks.filter((t) => t.status === 'in-progress').length} />
+        <StatCard label="Completed" value={tasks.filter((t) => t.status === 'completed').length} />
+        <StatCard label="Overdue" value={tasks.filter((t) => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'completed').length} />
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[820px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Task', 'Assigned To', 'Client', 'Deadline', 'Progress', 'Status', 'Priority'].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((t) => (
+              <tr key={t.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5 font-bold text-navy">{t.title}</td>
+                <td className="px-4 py-3.5 text-navy/70">{relLabel(t.employee)}</td>
+                <td className="px-4 py-3.5 text-navy/70">{t.client ? relLabel(t.client) : '—'}</td>
+                <td className="px-4 py-3.5 text-navy/70">{formatDate(t.deadline)}</td>
+                <td className="min-w-[140px] px-4 py-3.5">
+                  <Progress pct={progressMap[t.status]} />
+                </td>
+                <td className="px-4 py-3.5">
+                  <Badge color={t.status === 'completed' ? 'green' : t.deadline && new Date(t.deadline) < new Date() ? 'red' : 'blue'}>{t.status}</Badge>
+                </td>
+                <td className="px-4 py-3.5">
+                  <Badge color={t.priority === 'high' ? 'red' : t.priority === 'medium' ? 'yellow' : 'gray'}>{t.priority}</Badge>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No tasks yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Assign Task">
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <Field label="Task">
+            <input name="title" required className={inputClass} />
+          </Field>
+          <Field label="Assign to">
+            <select name="employee" required className={inputClass}>
+              {employees.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Client (optional)">
+            <select name="client" className={inputClass}>
+              <option value="">—</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Deadline">
+            <input name="deadline" type="date" required className={inputClass} />
+          </Field>
+          <Field label="Priority">
+            <select name="priority" defaultValue="medium" className={inputClass}>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </Field>
+          <Field label="Brief">
+            <textarea name="description" rows={3} className={inputClass} />
+          </Field>
+          <button disabled={saving} className="mt-2 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
+            {saving ? 'Assigning…' : 'Assign Task'}
+          </button>
+        </form>
+      </Modal>
+    </div>
+  )
+}
+
+/* ============================== ACTIVITY LOGS ============================== */
+
+function ActivityPage({ employees }: { employees: Doc[] }) {
+  const rows = employees
+    .map((e) => {
+      const sessions: Doc[] = e.sessions || []
+      const latest = sessions.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+      if (!latest) return null
+      const online = new Date(latest.expiresAt).getTime() > Date.now()
+      return { name: e.name, login: latest.createdAt, expires: latest.expiresAt, online }
+    })
+    .filter(Boolean) as { name: string; login: string; expires: string; online: boolean }[]
+
+  rows.sort((a, b) => new Date(b.login).getTime() - new Date(a.login).getTime())
+
+  return (
+    <div>
+      <SectionHead title="Login Activity" subtitle="Most recent session per team member." />
+
+      <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+        <table className="w-full min-w-[600px]">
+          <thead>
+            <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
+              {['Employee', 'Last Login', 'Session Expires', 'Status'].map((h) => (
+                <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} className="border-b border-navy/10 font-body text-sm last:border-0">
+                <td className="px-4 py-3.5 font-bold text-navy">{r.name}</td>
+                <td className="px-4 py-3.5 text-navy/70">{new Date(r.login).toLocaleString('en-IN')}</td>
+                <td className="px-4 py-3.5 text-navy/70">{new Date(r.expires).toLocaleString('en-IN')}</td>
+                <td className="px-4 py-3.5">
+                  <Badge color={r.online ? 'green' : 'gray'}>{r.online ? 'Online' : 'Offline'}</Badge>
+                </td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No login activity yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}

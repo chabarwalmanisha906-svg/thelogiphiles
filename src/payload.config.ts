@@ -16,6 +16,12 @@ import { TeamMembers } from './collections/TeamMembers'
 import { Employees } from './collections/Employees'
 import { Attendance } from './collections/Attendance'
 import { Tasks } from './collections/Tasks'
+import { PitchProspects } from './collections/PitchProspects'
+import { Invoices } from './collections/Invoices'
+import { Leaves } from './collections/Leaves'
+import { EmployeeFiles } from './collections/EmployeeFiles'
+import { Conversations } from './collections/Conversations'
+import { Messages } from './collections/Messages'
 import { SiteSettings } from './globals/SiteSettings'
 
 const filename = fileURLToPath(import.meta.url)
@@ -46,6 +52,12 @@ export default buildConfig({
     Employees,
     Attendance,
     Tasks,
+    PitchProspects,
+    Invoices,
+    Leaves,
+    EmployeeFiles,
+    Conversations,
+    Messages,
   ],
   globals: [SiteSettings],
   editor: lexicalEditor({}),

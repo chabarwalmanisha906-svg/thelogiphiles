@@ -36,6 +36,23 @@ export const Enquiries: CollectionConfig = {
       ],
     },
     { name: 'message', type: 'textarea', required: true },
+    { name: 'value', type: 'number', label: 'Estimated value (₹)', admin: { position: 'sidebar' } },
+    { name: 'owner', type: 'relationship', relationTo: 'users', admin: { position: 'sidebar' } },
+    {
+      name: 'stage',
+      type: 'select',
+      defaultValue: 'new',
+      admin: { position: 'sidebar' },
+      options: [
+        { label: 'New', value: 'new' },
+        { label: 'Contacted', value: 'contacted' },
+        { label: 'Discovery / Meeting', value: 'discovery' },
+        { label: 'Proposal Sent', value: 'proposal' },
+        { label: 'Negotiation', value: 'negotiation' },
+        { label: 'Won', value: 'won' },
+        { label: 'Lost', value: 'lost' },
+      ],
+    },
     { name: 'emailSent', type: 'checkbox', defaultValue: false, admin: { position: 'sidebar' } },
   ],
 }

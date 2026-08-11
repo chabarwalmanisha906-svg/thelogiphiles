@@ -29,6 +29,7 @@ export const Tasks: CollectionConfig = {
           data.title = originalDoc.title
           data.description = originalDoc.description
           data.deadline = originalDoc.deadline
+          data.client = originalDoc.client
         }
         return data
       },
@@ -38,6 +39,7 @@ export const Tasks: CollectionConfig = {
     { name: 'title', type: 'text', required: true },
     { name: 'description', type: 'textarea' },
     { name: 'employee', type: 'relationship', relationTo: 'employees', required: true },
+    { name: 'client', type: 'relationship', relationTo: 'clients' },
     {
       name: 'status',
       type: 'select',
@@ -51,5 +53,16 @@ export const Tasks: CollectionConfig = {
     },
     { name: 'accepted', type: 'checkbox', defaultValue: false, admin: { position: 'sidebar' } },
     { name: 'deadline', type: 'date', admin: { position: 'sidebar' } },
+    {
+      name: 'priority',
+      type: 'select',
+      defaultValue: 'medium',
+      admin: { position: 'sidebar' },
+      options: [
+        { label: 'High', value: 'high' },
+        { label: 'Medium', value: 'medium' },
+        { label: 'Low', value: 'low' },
+      ],
+    },
   ],
 }
