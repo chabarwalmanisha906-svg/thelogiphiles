@@ -22,6 +22,7 @@ import { Leaves } from './collections/Leaves'
 import { EmployeeFiles } from './collections/EmployeeFiles'
 import { Conversations } from './collections/Conversations'
 import { Messages } from './collections/Messages'
+import { ChatAttachments } from './collections/ChatAttachments'
 import { SiteSettings } from './globals/SiteSettings'
 
 const filename = fileURLToPath(import.meta.url)
@@ -58,6 +59,7 @@ export default buildConfig({
     EmployeeFiles,
     Conversations,
     Messages,
+    ChatAttachments,
   ],
   globals: [SiteSettings],
   routes: {

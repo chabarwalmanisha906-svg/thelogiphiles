@@ -26,6 +26,7 @@ export const Messages: CollectionConfig = {
   fields: [
     { name: 'conversation', type: 'relationship', relationTo: 'conversations', required: true },
     { name: 'sender', type: 'relationship', relationTo: ['users', 'employees'], required: true },
-    { name: 'text', type: 'textarea', required: true },
+    { name: 'text', type: 'textarea' },
+    { name: 'attachment', type: 'relationship', relationTo: 'chat-attachments' },
   ],
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Users as UsersIcon, SquarePen, Video, Paperclip, Send } from 'lucide-react'
+import { Users as UsersIcon, SquarePen, Video, Paperclip, Send, X, FileText, Download } from 'lucide-react'
 import { api, Modal, Field, inputClass, useToast } from '@/components/dashboard/ui'
 
 type Doc = Record<string, any>
@@ -23,7 +23,10 @@ export function ChatPanel({ me }: { me: Me }) {
   const [text, setText] = useState('')
   const [groupOpen, setGroupOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [sending, setSending] = useState(false)
   const historyRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadDirectory = useCallback(async () => {
     const [emp, users] = await Promise.all([api('/employees?limit=200'), api('/users?limit=50')])
@@ -97,11 +100,43 @@ export function ChatPanel({ me }: { me: Me }) {
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
-    if (!text.trim() || !activeId) return
+    if ((!text.trim() && !pendingFile) || !activeId) return
     const body = text
+    const file = pendingFile
     setText('')
-    await api('/messages', { method: 'POST', body: JSON.stringify({ conversation: Number(activeId), text: body }) })
-    await loadMessages(activeId)
+    setPendingFile(null)
+    setSending(true)
+    try {
+      let attachmentId: number | undefined
+      if (file) {
+        const form = new FormData()
+        form.append('file', file)
+        form.append('_payload', JSON.stringify({}))
+        const res = await fetch('/api/chat-attachments', { method: 'POST', credentials: 'include', body: form })
+        if (!res.ok) throw new Error('File upload failed')
+        const data = await res.json()
+        attachmentId = data.doc.id
+      }
+      await api('/messages', {
+        method: 'POST',
+        body: JSON.stringify({
+          conversation: Number(activeId),
+          text: body || undefined,
+          attachment: attachmentId,
+        }),
+      })
+      await loadMessages(activeId)
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to send message')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) setPendingFile(file)
+    e.target.value = ''
   }
 
   async function handleCreateGroup(e: React.FormEvent<HTMLFormElement>) {
@@ -179,6 +214,8 @@ export function ChatPanel({ me }: { me: Me }) {
             <div ref={historyRef} className="flex flex-1 flex-col gap-3 overflow-y-auto bg-offwhite/40 p-5">
               {messages.map((m) => {
                 const mine = m.sender?.relationTo === me.collection && String(m.sender?.value?.id) === String(me.id)
+                const attachment = m.attachment && typeof m.attachment === 'object' ? m.attachment : null
+                const isImage = attachment?.mimeType?.startsWith('image/')
                 return (
                   <div
                     key={m.id}
@@ -186,6 +223,25 @@ export function ChatPanel({ me }: { me: Me }) {
                       mine ? 'self-end rounded-br-none bg-mint text-white' : 'self-start rounded-bl-none border border-navy/10 bg-white text-navy'
                     }`}
                   >
+                    {attachment && isImage && (
+                      <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="mb-2 block">
+                        <img src={attachment.url} alt={attachment.filename} className="max-h-52 w-full rounded-md object-cover" />
+                      </a>
+                    )}
+                    {attachment && !isImage && (
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`mb-2 flex items-center gap-2.5 rounded-md border px-3 py-2.5 ${
+                          mine ? 'border-white/30 bg-white/10' : 'border-navy/10 bg-offwhite'
+                        }`}
+                      >
+                        <FileText size={18} className="shrink-0" />
+                        <span className="min-w-0 flex-1 truncate font-semibold">{attachment.filename}</span>
+                        <Download size={14} className="shrink-0" />
+                      </a>
+                    )}
                     {m.text}
                     <span className={`mt-1 block text-[9px] ${mine ? 'text-white/70' : 'text-navy/40'}`}>
                       {new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
@@ -196,15 +252,37 @@ export function ChatPanel({ me }: { me: Me }) {
               {messages.length === 0 && <p className="text-center font-body text-xs text-navy/40">Say hello 👋</p>}
             </div>
 
+            {pendingFile && (
+              <div className="flex items-center gap-2.5 border-t border-navy/10 bg-offwhite/60 px-5 py-2.5">
+                <FileText size={15} className="shrink-0 text-navy/50" />
+                <span className="min-w-0 flex-1 truncate font-body text-xs font-semibold text-navy">{pendingFile.name}</span>
+                <button type="button" onClick={() => setPendingFile(null)} className="text-navy/40 hover:text-red-600">
+                  <X size={15} />
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleSend} className="flex items-center gap-3 border-t border-navy/10 px-5 py-4">
-              <Paperclip size={18} className="text-navy/30" />
+              <input ref={fileInputRef} type="file" onChange={handleFileChange} className="hidden" />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="shrink-0 text-navy/30 hover:text-mint"
+                title="Attach a file"
+              >
+                <Paperclip size={18} />
+              </button>
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder={`Type a message to ${conversationLabel(activeConv)}...`}
                 className="flex-1 rounded-full border border-navy/15 bg-offwhite px-4 py-3 font-body text-sm text-navy focus:border-mint focus:outline-none"
               />
-              <button type="submit" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-navy text-white hover:bg-mint">
+              <button
+                type="submit"
+                disabled={sending}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-navy text-white hover:bg-mint disabled:opacity-50"
+              >
                 <Send size={16} />
               </button>
             </form>
