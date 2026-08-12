@@ -23,7 +23,6 @@ import {
   MessageCircle,
   PenLine,
   Briefcase,
-  UploadCloud,
 } from 'lucide-react'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 import {
@@ -42,6 +41,7 @@ import {
   Progress,
   SectionHead,
   compressImage,
+  ImagePickerField,
 } from './ui'
 
 type Doc = Record<string, any>
@@ -2032,12 +2032,7 @@ function InsightsAdminPage({ search, toast }: { search: string; toast: (m: strin
               </select>
             </Field>
             <Field label="Featured image">
-              <label className="flex cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed border-navy/15 bg-offwhite/60 p-6 text-center hover:border-mint">
-                <UploadCloud size={24} className="text-mint" />
-                <span className="font-body text-[13px] font-bold text-navy">Click to upload image</span>
-                <span className="font-body text-[11px] text-navy/40">JPG, PNG, WEBP</span>
-                <input type="file" name="featuredImage" accept="image/*" required className="hidden" />
-              </label>
+              <ImagePickerField name="featuredImage" />
             </Field>
             <Field label="Excerpt">
               <textarea name="excerpt" rows={2} required className={inputClass} />
@@ -2197,11 +2192,7 @@ function CaseStudiesAdminPage({ search, toast }: { search: string; toast: (m: st
             </select>
           </Field>
           <Field label="Cover image">
-            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed border-navy/15 bg-offwhite/60 p-6 text-center hover:border-mint">
-              <UploadCloud size={24} className="text-mint" />
-              <span className="font-body text-[13px] font-bold text-navy">Click to upload image</span>
-              <input type="file" name="coverImage" accept="image/*" required className="hidden" />
-            </label>
+            <ImagePickerField name="coverImage" />
           </Field>
           <Field label="Short description (shown on Work grid)">
             <textarea name="description" rows={2} required className={inputClass} />

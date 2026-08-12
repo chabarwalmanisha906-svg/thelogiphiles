@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { UploadCloud } from 'lucide-react'
 
 export async function api(path: string, options?: RequestInit) {
   const res = await fetch(`/api${path}`, {
@@ -206,5 +207,44 @@ export function SectionHead({ title, subtitle, action }: { title: string; subtit
       </div>
       {action}
     </div>
+  )
+}
+
+// Plain <input type="file"> gives no feedback once a file is chosen — the box
+// looks identical before and after, so a real selection can look like nothing
+// happened. This shows a thumbnail + filename once something is picked.
+export function ImagePickerField({ name, required = true }: { name: string; required?: boolean }) {
+  const [preview, setPreview] = useState<string | null>(null)
+  const [fileName, setFileName] = useState<string | null>(null)
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) {
+      setPreview(null)
+      setFileName(null)
+      return
+    }
+    setFileName(file.name)
+    setPreview(URL.createObjectURL(file))
+  }
+
+  return (
+    <label className="flex cursor-pointer flex-col items-center gap-2 overflow-hidden rounded-md border-2 border-dashed border-navy/15 bg-offwhite/60 p-6 text-center hover:border-mint">
+      {preview ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="" className="max-h-32 rounded-md object-contain" />
+          <span className="max-w-full truncate font-body text-[12px] font-semibold text-navy">{fileName}</span>
+          <span className="font-body text-[11px] font-bold uppercase tracking-wide text-mint">Click to change</span>
+        </>
+      ) : (
+        <>
+          <UploadCloud size={24} className="text-mint" />
+          <span className="font-body text-[13px] font-bold text-navy">Click to upload image</span>
+          <span className="font-body text-[11px] text-navy/40">JPG, PNG, WEBP</span>
+        </>
+      )}
+      <input type="file" name={name} accept="image/*" required={required} className="hidden" onChange={handleChange} />
+    </label>
   )
 }
