@@ -159,7 +159,7 @@ export function Modal({
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="w-full max-w-lg rounded-xl bg-white p-8 shadow-2xl">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-8 shadow-2xl">
         <div className="mb-5 flex items-center justify-between">
           <h3 className="font-heading text-lg font-extrabold text-navy">{title}</h3>
           <button
