@@ -113,6 +113,17 @@ function lexicalFromText(text: string) {
   }
 }
 
+function lexicalToText(content: any): string {
+  try {
+    const children = content?.root?.children || []
+    return children
+      .map((node: any) => (node.children || []).map((c: any) => c.text || '').join(''))
+      .join('\n')
+  } catch {
+    return ''
+  }
+}
+
 function slugify(text: string) {
   return text
     .toLowerCase()
@@ -1893,6 +1904,7 @@ function InsightsAdminPage({ search, toast }: { search: string; toast: (m: strin
   const [categories, setCategories] = useState<Doc[]>([])
   const [filter, setFilter] = useState('ALL')
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<Doc | null>(null)
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
@@ -1912,33 +1924,59 @@ function InsightsAdminPage({ search, toast }: { search: string; toast: (m: strin
     return matchesFilter && matchesSearch
   })
 
+  function openCreate() {
+    setEditing(null)
+    setOpen(true)
+  }
+
+  function openEdit(p: Doc) {
+    setEditing(p)
+    setOpen(true)
+  }
+
+  async function handleDelete(p: Doc) {
+    if (!confirm(`Delete "${p.title}"? This can't be undone.`)) return
+    try {
+      await api(`/posts/${p.id}`, { method: 'DELETE' })
+      toast('Insight deleted')
+      await load()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete insight')
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSaving(true)
     const form = new FormData(e.currentTarget)
     try {
       const file = (form.get('featuredImage') as File) || null
-      if (!file || file.size === 0) throw new Error('Please choose a featured image')
       const title = String(form.get('title'))
-      const mediaId = await uploadMedia(file, title)
-      await api('/posts', {
-        method: 'POST',
-        body: JSON.stringify({
-          title,
-          slug: slugify(title),
-          category: Number(form.get('category')),
-          publishedDate: new Date().toISOString(),
-          featuredImage: Number(mediaId),
-          excerpt: form.get('excerpt'),
-          content: lexicalFromText(String(form.get('content') || '')),
-          _status: form.get('status'),
-        }),
-      })
-      toast('Insight published successfully!')
+      const payload: Doc = {
+        title,
+        slug: slugify(title),
+        category: Number(form.get('category')),
+        excerpt: form.get('excerpt'),
+        content: lexicalFromText(String(form.get('content') || '')),
+        _status: form.get('status'),
+      }
+      if (file && file.size > 0) {
+        payload.featuredImage = Number(await uploadMedia(file, title))
+      } else if (!editing) {
+        throw new Error('Please choose a featured image')
+      }
+      if (editing) {
+        await api(`/posts/${editing.id}`, { method: 'PATCH', body: JSON.stringify(payload) })
+        toast('Insight updated successfully!')
+      } else {
+        payload.publishedDate = new Date().toISOString()
+        await api('/posts', { method: 'POST', body: JSON.stringify(payload) })
+        toast('Insight published successfully!')
+      }
       setOpen(false)
       await load()
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Failed to publish insight')
+      toast(err instanceof Error ? err.message : 'Failed to save insight')
     } finally {
       setSaving(false)
     }
@@ -1950,7 +1988,7 @@ function InsightsAdminPage({ search, toast }: { search: string; toast: (m: strin
         title="Insights & Blog Posts"
         subtitle="Manage, write, and publish thought leadership articles for the website."
         action={
-          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+          <button onClick={openCreate} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
             + Write New Insight
           </button>
         }
@@ -1986,14 +2024,20 @@ function InsightsAdminPage({ search, toast }: { search: string; toast: (m: strin
                   <Badge color={p._status === 'published' ? 'green' : 'yellow'}>{p._status}</Badge>
                 </td>
                 <td className="px-4 py-3.5">
-                  <a
-                    href={`/cms/collections/posts/${p.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
-                  >
-                    Edit
-                  </a>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEdit(p)}
+                      className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(p)}
+                      className="rounded-md border border-red-200 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-red-600 hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -2008,7 +2052,7 @@ function InsightsAdminPage({ search, toast }: { search: string; toast: (m: strin
         </table>
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Write New Insight (Blog)">
+      <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit Insight' : 'Write New Insight (Blog)'}>
         {categories.length === 0 ? (
           <p className="font-body text-sm text-navy/60">
             No categories exist yet — create one first in{' '}
@@ -2018,12 +2062,12 @@ function InsightsAdminPage({ search, toast }: { search: string; toast: (m: strin
             , then come back here.
           </p>
         ) : (
-          <form onSubmit={handleSubmit} className="grid gap-4">
+          <form key={editing?.id || 'new'} onSubmit={handleSubmit} className="grid gap-4">
             <Field label="Article title">
-              <input name="title" required placeholder="E.g., The Future of AI in Copywriting" className={inputClass} />
+              <input name="title" required defaultValue={editing?.title} placeholder="E.g., The Future of AI in Copywriting" className={inputClass} />
             </Field>
             <Field label="Category">
-              <select name="category" required className={inputClass}>
+              <select name="category" required defaultValue={relId(editing?.category)} className={inputClass}>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -2031,23 +2075,30 @@ function InsightsAdminPage({ search, toast }: { search: string; toast: (m: strin
                 ))}
               </select>
             </Field>
-            <Field label="Featured image">
-              <ImagePickerField name="featuredImage" />
+            <Field label={editing ? 'Featured image (leave blank to keep current)' : 'Featured image'}>
+              <ImagePickerField name="featuredImage" required={!editing} />
             </Field>
             <Field label="Excerpt">
-              <textarea name="excerpt" rows={2} required className={inputClass} />
+              <textarea name="excerpt" rows={2} required defaultValue={editing?.excerpt} className={inputClass} />
             </Field>
             <Field label="Content body">
-              <textarea name="content" rows={6} required placeholder="Write your blog post content here…" className={inputClass} />
+              <textarea
+                name="content"
+                rows={6}
+                required
+                defaultValue={editing ? lexicalToText(editing.content) : ''}
+                placeholder="Write your blog post content here…"
+                className={inputClass}
+              />
             </Field>
             <Field label="Status">
-              <select name="status" defaultValue="published" className={inputClass}>
+              <select name="status" defaultValue={editing?._status || 'published'} className={inputClass}>
                 <option value="published">Published</option>
                 <option value="draft">Draft</option>
               </select>
             </Field>
             <button disabled={saving} className="mt-1 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
-              {saving ? 'Publishing…' : 'Publish Insight'}
+              {saving ? 'Saving…' : editing ? 'Update Insight' : 'Publish Insight'}
             </button>
           </form>
         )}
@@ -2062,6 +2113,7 @@ function CaseStudiesAdminPage({ search, toast }: { search: string; toast: (m: st
   const [items, setItems] = useState<Doc[]>([])
   const [filter, setFilter] = useState('ALL')
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<Doc | null>(null)
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
@@ -2079,28 +2131,54 @@ function CaseStudiesAdminPage({ search, toast }: { search: string; toast: (m: st
     return matchesFilter && matchesSearch
   })
 
+  function openCreate() {
+    setEditing(null)
+    setOpen(true)
+  }
+
+  function openEdit(w: Doc) {
+    setEditing(w)
+    setOpen(true)
+  }
+
+  async function handleDelete(w: Doc) {
+    if (!confirm(`Delete "${w.title}"? This can't be undone.`)) return
+    try {
+      await api(`/work/${w.id}`, { method: 'DELETE' })
+      toast('Case study deleted')
+      await load()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete case study')
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSaving(true)
     const form = new FormData(e.currentTarget)
     try {
       const file = (form.get('coverImage') as File) || null
-      if (!file || file.size === 0) throw new Error('Please choose a cover image')
       const title = String(form.get('title'))
-      const mediaId = await uploadMedia(file, title)
-      await api('/work', {
-        method: 'POST',
-        body: JSON.stringify({
-          title,
-          slug: slugify(title),
-          client: form.get('client'),
-          category: form.get('category'),
-          description: form.get('description'),
-          coverImage: Number(mediaId),
-          challenge: lexicalFromText(String(form.get('challenge') || '')),
-        }),
-      })
-      toast('Case study added successfully!')
+      const payload: Doc = {
+        title,
+        slug: slugify(title),
+        client: form.get('client'),
+        category: form.get('category'),
+        description: form.get('description'),
+        challenge: lexicalFromText(String(form.get('challenge') || '')),
+      }
+      if (file && file.size > 0) {
+        payload.coverImage = Number(await uploadMedia(file, title))
+      } else if (!editing) {
+        throw new Error('Please choose a cover image')
+      }
+      if (editing) {
+        await api(`/work/${editing.id}`, { method: 'PATCH', body: JSON.stringify(payload) })
+        toast('Case study updated successfully!')
+      } else {
+        await api('/work', { method: 'POST', body: JSON.stringify(payload) })
+        toast('Case study added successfully!')
+      }
       setOpen(false)
       await load()
     } catch (err) {
@@ -2116,7 +2194,7 @@ function CaseStudiesAdminPage({ search, toast }: { search: string; toast: (m: st
         title="Case Studies"
         subtitle="Showcase your best work, problems solved, and the impact created for clients."
         action={
-          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+          <button onClick={openCreate} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
             + Add Case Study
           </button>
         }
@@ -2150,14 +2228,20 @@ function CaseStudiesAdminPage({ search, toast }: { search: string; toast: (m: st
                   {w.featured ? <Badge color="green">Featured</Badge> : <span className="text-navy/30">—</span>}
                 </td>
                 <td className="px-4 py-3.5">
-                  <a
-                    href={`/cms/collections/work/${w.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
-                  >
-                    View / Edit
-                  </a>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEdit(w)}
+                      className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(w)}
+                      className="rounded-md border border-red-200 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-red-600 hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -2172,18 +2256,18 @@ function CaseStudiesAdminPage({ search, toast }: { search: string; toast: (m: st
         </table>
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Add New Case Study">
-        <form onSubmit={handleSubmit} className="grid gap-4">
+      <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit Case Study' : 'Add New Case Study'}>
+        <form key={editing?.id || 'new'} onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Client name">
-              <input name="client" required placeholder="E.g., HealthKeyz" className={inputClass} />
+              <input name="client" required defaultValue={editing?.client} placeholder="E.g., HealthKeyz" className={inputClass} />
             </Field>
             <Field label="Project title">
-              <input name="title" required placeholder="E.g., Scaling digital presence" className={inputClass} />
+              <input name="title" required defaultValue={editing?.title} placeholder="E.g., Scaling digital presence" className={inputClass} />
             </Field>
           </div>
           <Field label="Category tag">
-            <select name="category" required className={inputClass}>
+            <select name="category" required defaultValue={editing?.category} className={inputClass}>
               {WORK_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -2191,17 +2275,23 @@ function CaseStudiesAdminPage({ search, toast }: { search: string; toast: (m: st
               ))}
             </select>
           </Field>
-          <Field label="Cover image">
-            <ImagePickerField name="coverImage" />
+          <Field label={editing ? 'Cover image (leave blank to keep current)' : 'Cover image'}>
+            <ImagePickerField name="coverImage" required={!editing} />
           </Field>
           <Field label="Short description (shown on Work grid)">
-            <textarea name="description" rows={2} required className={inputClass} />
+            <textarea name="description" rows={2} required defaultValue={editing?.description} className={inputClass} />
           </Field>
           <Field label="The Challenge">
-            <textarea name="challenge" rows={4} placeholder="Describe the problem…" className={inputClass} />
+            <textarea
+              name="challenge"
+              rows={4}
+              defaultValue={editing ? lexicalToText(editing.challenge) : ''}
+              placeholder="Describe the problem…"
+              className={inputClass}
+            />
           </Field>
           <button disabled={saving} className="mt-1 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
-            {saving ? 'Saving…' : 'Save Case Study'}
+            {saving ? 'Saving…' : editing ? 'Update Case Study' : 'Save Case Study'}
           </button>
         </form>
       </Modal>
