@@ -15,6 +15,33 @@ export async function api(path: string, options?: RequestInit) {
   return res.json()
 }
 
+// Vercel's serverless functions reject request bodies over ~4.5MB, which real
+// phone photos routinely exceed. Downscale/re-encode images client-side before
+// upload so they reliably fit, instead of failing with an opaque server error.
+export async function compressImage(file: File, maxDimension = 1600, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith('image/') || file.type === 'image/svg+xml' || file.type === 'image/gif') {
+    return file
+  }
+  try {
+    const bitmap = await createImageBitmap(file)
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height))
+    const width = Math.round(bitmap.width * scale)
+    const height = Math.round(bitmap.height * scale)
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return file
+    ctx.drawImage(bitmap, 0, 0, width, height)
+    const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality))
+    if (!blob || blob.size >= file.size) return file
+    const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg'
+    return new File([blob], newName, { type: 'image/jpeg' })
+  } catch {
+    return file
+  }
+}
+
 export function formatINR(n?: number | null) {
   if (!n) return '₹0'
   if (n >= 100000) return `₹${(n / 100000).toFixed(1)}L`

@@ -30,6 +30,7 @@ import {
   Badge,
   Field,
   inputClass,
+  compressImage,
 } from '@/components/dashboard/ui'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 
@@ -422,11 +423,15 @@ function FilesView({ employeeId, toast }: { employeeId: string; toast: (m: strin
     if (!file) return
     setUploading(true)
     try {
+      const compressed = await compressImage(file)
       const form = new FormData()
-      form.append('file', file)
+      form.append('file', compressed)
       form.append('_payload', JSON.stringify({ label: file.name, folder: activeFolder || 'other' }))
       const res = await fetch('/api/employee-files', { method: 'POST', credentials: 'include', body: form })
-      if (!res.ok) throw new Error('Upload failed')
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.errors?.[0]?.message || 'Upload failed — try a smaller file')
+      }
       toast('File uploaded securely to workspace')
       await load()
     } catch (err) {

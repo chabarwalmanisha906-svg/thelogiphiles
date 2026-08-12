@@ -41,6 +41,7 @@ import {
   inputClass,
   Progress,
   SectionHead,
+  compressImage,
 } from './ui'
 
 type Doc = Record<string, any>
@@ -121,11 +122,15 @@ function slugify(text: string) {
 }
 
 async function uploadMedia(file: File, alt: string): Promise<string> {
+  const compressed = await compressImage(file)
   const form = new FormData()
-  form.append('file', file)
+  form.append('file', compressed)
   form.append('_payload', JSON.stringify({ alt }))
   const res = await fetch('/api/media', { method: 'POST', credentials: 'include', body: form })
-  if (!res.ok) throw new Error('Image upload failed')
+  if (!res.ok) {
+    const data = await res.json().catch(() => null)
+    throw new Error(data?.errors?.[0]?.message || 'Image upload failed — try a smaller image')
+  }
   const data = await res.json()
   return String(data.doc.id)
 }

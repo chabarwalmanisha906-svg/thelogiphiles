@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Users as UsersIcon, SquarePen, Video, Paperclip, Send, X, FileText, Download } from 'lucide-react'
-import { api, Modal, Field, inputClass, useToast } from '@/components/dashboard/ui'
+import { api, Modal, Field, inputClass, useToast, compressImage } from '@/components/dashboard/ui'
 
 type Doc = Record<string, any>
 type Me = { id: string; collection: 'users' | 'employees'; name: string }
@@ -109,11 +109,15 @@ export function ChatPanel({ me }: { me: Me }) {
     try {
       let attachmentId: number | undefined
       if (file) {
+        const compressed = await compressImage(file)
         const form = new FormData()
-        form.append('file', file)
+        form.append('file', compressed)
         form.append('_payload', JSON.stringify({}))
         const res = await fetch('/api/chat-attachments', { method: 'POST', credentials: 'include', body: form })
-        if (!res.ok) throw new Error('File upload failed')
+        if (!res.ok) {
+          const data = await res.json().catch(() => null)
+          throw new Error(data?.errors?.[0]?.message || 'File upload failed — try a smaller file')
+        }
         const data = await res.json()
         attachmentId = data.doc.id
       }
