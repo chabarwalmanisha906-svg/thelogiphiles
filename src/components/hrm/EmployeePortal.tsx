@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import {
   Armchair,
   Home,
@@ -32,7 +33,9 @@ import {
   inputClass,
   compressImage,
 } from '@/components/dashboard/ui'
-import { ChatPanel } from '@/components/chat/ChatPanel'
+const ChatPanel = dynamic(() => import('@/components/chat/ChatPanel').then((m) => m.ChatPanel), {
+  loading: () => <p className="font-body text-sm text-navy/40">Loading messages…</p>,
+})
 
 type Doc = Record<string, any>
 

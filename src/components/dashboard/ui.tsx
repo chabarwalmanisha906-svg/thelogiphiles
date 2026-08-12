@@ -213,15 +213,23 @@ export function SectionHead({ title, subtitle, action }: { title: string; subtit
 // Plain <input type="file"> gives no feedback once a file is chosen — the box
 // looks identical before and after, so a real selection can look like nothing
 // happened. This shows a thumbnail + filename once something is picked.
-export function ImagePickerField({ name, required = true }: { name: string; required?: boolean }) {
-  const [preview, setPreview] = useState<string | null>(null)
-  const [fileName, setFileName] = useState<string | null>(null)
+export function ImagePickerField({
+  name,
+  required = true,
+  existingUrl,
+}: {
+  name: string
+  required?: boolean
+  existingUrl?: string | null
+}) {
+  const [preview, setPreview] = useState<string | null>(existingUrl || null)
+  const [fileName, setFileName] = useState<string | null>(existingUrl ? 'Current image' : null)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) {
-      setPreview(null)
-      setFileName(null)
+      setPreview(existingUrl || null)
+      setFileName(existingUrl ? 'Current image' : null)
       return
     }
     setFileName(file.name)

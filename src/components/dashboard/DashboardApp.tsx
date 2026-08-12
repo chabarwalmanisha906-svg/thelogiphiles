@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import {
   LayoutDashboard,
   Building2,
@@ -24,7 +25,9 @@ import {
   PenLine,
   Briefcase,
 } from 'lucide-react'
-import { ChatPanel } from '@/components/chat/ChatPanel'
+const ChatPanel = dynamic(() => import('@/components/chat/ChatPanel').then((m) => m.ChatPanel), {
+  loading: () => <p className="font-body text-sm text-navy/40">Loading messages…</p>,
+})
 import {
   api,
   formatINR,
@@ -177,17 +180,23 @@ function Shell() {
   useEffect(() => {
     ;(async () => {
       try {
-        const meRes = await fetch('/api/users/me', { credentials: 'include' })
-        const meData = await meRes.json().catch(() => null)
-        if (!meRes.ok || !meData?.user) {
+        // Fire the auth check alongside the data fetches instead of waiting for
+        // it first — if it turns out we're not authenticated we redirect away
+        // and discard the rest, but on the happy path this saves a full
+        // round-trip of latency.
+        const [meRes, empData, clientData] = await Promise.all([
+          fetch('/api/users/me', { credentials: 'include' }).then(async (r) => ({
+            ok: r.ok,
+            data: await r.json().catch(() => null),
+          })),
+          api('/employees?limit=200&sort=name').catch(() => ({ docs: [] })),
+          api('/clients?limit=200&sort=name').catch(() => ({ docs: [] })),
+        ])
+        if (!meRes.ok || !meRes.data?.user) {
           router.push('/admin/login')
           return
         }
-        setMe(meData.user)
-        const [empData, clientData] = await Promise.all([
-          api('/employees?limit=200&sort=name'),
-          api('/clients?limit=200&sort=name'),
-        ])
+        setMe(meRes.data.user)
         setEmployees(empData.docs || [])
         setClients(clientData.docs || [])
       } catch {
@@ -2076,7 +2085,7 @@ function InsightsAdminPage({ search, toast }: { search: string; toast: (m: strin
               </select>
             </Field>
             <Field label={editing ? 'Featured image (leave blank to keep current)' : 'Featured image'}>
-              <ImagePickerField name="featuredImage" required={!editing} />
+              <ImagePickerField name="featuredImage" required={!editing} existingUrl={editing?.featuredImage?.url} />
             </Field>
             <Field label="Excerpt">
               <textarea name="excerpt" rows={2} required defaultValue={editing?.excerpt} className={inputClass} />
@@ -2276,7 +2285,7 @@ function CaseStudiesAdminPage({ search, toast }: { search: string; toast: (m: st
             </select>
           </Field>
           <Field label={editing ? 'Cover image (leave blank to keep current)' : 'Cover image'}>
-            <ImagePickerField name="coverImage" required={!editing} />
+            <ImagePickerField name="coverImage" required={!editing} existingUrl={editing?.coverImage?.url} />
           </Field>
           <Field label="Short description (shown on Work grid)">
             <textarea name="description" rows={2} required defaultValue={editing?.description} className={inputClass} />
