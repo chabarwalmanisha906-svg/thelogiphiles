@@ -7,6 +7,8 @@ import { mediaAlt, mediaUrl } from '@/lib/media'
 import { RichTextRenderer } from '@/components/RichTextRenderer'
 import { ScrollReveal } from '@/components/ScrollReveal'
 
+export const revalidate = 60
+
 export async function generateStaticParams() {
   const work = await getWork()
   return work.map((item) => ({ slug: item.slug }))

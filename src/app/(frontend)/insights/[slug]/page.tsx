@@ -6,6 +6,8 @@ import { mediaAlt, mediaUrl } from '@/lib/media'
 import { RichTextRenderer } from '@/components/RichTextRenderer'
 import { ScrollReveal } from '@/components/ScrollReveal'
 
+export const revalidate = 60
+
 export async function generateStaticParams() {
   const posts = await getPosts()
   return posts.map((post) => ({ slug: post.slug }))

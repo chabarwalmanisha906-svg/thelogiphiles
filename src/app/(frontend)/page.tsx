@@ -12,6 +12,11 @@ import { WhoWeAre } from '@/components/sections/WhoWeAre'
 import { FinalStatement } from '@/components/sections/FinalStatement'
 import { ContactSection } from '@/components/sections/ContactSection'
 
+// Without this, the static page only picks up new CMS content (blog posts,
+// work items, client logos) on the next deploy — this refreshes it in the
+// background periodically instead.
+export const revalidate = 60
+
 export default async function Home() {
   const [settings, work, posts, clients] = await Promise.all([
     getSiteSettings(),

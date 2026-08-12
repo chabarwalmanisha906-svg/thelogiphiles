@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "Words we've put to work — advertising, brand and content case studies from The Logiphiles.",
 }
 
+export const revalidate = 60
+
 export default async function WorkPage() {
   const work = await getWork()
 

@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: 'The people behind The Logiphiles — writers, strategists and linguists obsessed with words.',
 }
 
+export const revalidate = 60
+
 export default async function TeamPage() {
   const team = await getTeamMembers()
 

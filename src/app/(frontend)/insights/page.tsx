@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: 'Words on our mind — perspectives on advertising, language and communication from The Logiphiles.',
 }
 
+export const revalidate = 60
+
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-IN', {
     day: 'numeric',
