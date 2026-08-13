@@ -1663,6 +1663,10 @@ function TeamPage({
             setSelected(updated)
             await refresh()
           }}
+          onDeleted={async () => {
+            setSelected(null)
+            await refresh()
+          }}
         />
       )}
     </div>
@@ -1684,13 +1688,16 @@ function EmployeeProfileModal({
   onClose,
   toast,
   onSaved,
+  onDeleted,
 }: {
   employee: Doc
   onClose: () => void
   toast: (m: string) => void
   onSaved: (updated: Doc) => Promise<void>
+  onDeleted: () => Promise<void>
 }) {
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [files, setFiles] = useState<Doc[]>([])
   const [uploading, setUploading] = useState(false)
   const [docLabel, setDocLabel] = useState('')
@@ -1728,6 +1735,19 @@ function EmployeeProfileModal({
       toast(err instanceof Error ? err.message : 'Failed to update profile')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm(`Remove ${employee.name} from the team? This cannot be undone.`)) return
+    setDeleting(true)
+    try {
+      await api(`/employees/${employee.id}`, { method: 'DELETE' })
+      toast('Team member removed')
+      await onDeleted()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to remove team member')
+      setDeleting(false)
     }
   }
 
@@ -1826,6 +1846,17 @@ function EmployeeProfileModal({
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </form>
+
+        <div className="border-t border-navy/10 pt-5">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="w-full rounded-md border border-red-200 py-3 font-heading text-xs font-bold uppercase text-red-500 hover:bg-red-50 disabled:opacity-60"
+          >
+            {deleting ? 'Removing…' : 'Remove Team Member'}
+          </button>
+        </div>
 
         <div className="border-t border-navy/10 pt-5">
           <h4 className="mb-3 font-heading text-sm font-extrabold text-navy">Documents</h4>
