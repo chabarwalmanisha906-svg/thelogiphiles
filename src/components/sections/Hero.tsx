@@ -107,12 +107,6 @@ export function Hero({ settings }: { settings: SiteSettings }) {
           />
         </motion.div>
       </div>
-
-      <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center">
-        <span className="font-heading text-xs font-semibold tracking-[0.2em] text-navy/40">
-          SCROLL
-        </span>
-      </div>
     </section>
   )
 }

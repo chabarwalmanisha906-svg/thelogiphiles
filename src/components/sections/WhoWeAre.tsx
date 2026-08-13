@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import {
   Armchair,
-  ArrowDown,
   BookOpen,
   FileText,
   Languages,
@@ -64,13 +63,6 @@ export function WhoWeAre() {
               <p className="mt-12 max-w-xs -rotate-3 font-hand text-2xl leading-tight text-navy">
                 Because the right words change everything.
               </p>
-            </ScrollReveal>
-
-            <ScrollReveal delay={0.15}>
-              <div className="mt-14 hidden items-center gap-2.5 font-heading text-[11px] font-bold tracking-[0.15em] text-mint sm:flex">
-                <ArrowDown size={14} strokeWidth={2.5} />
-                SCROLL
-              </div>
             </ScrollReveal>
           </div>
 
