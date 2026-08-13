@@ -102,8 +102,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 export function useUnreadMessages(meKey: string | null) {
   const toast = useToast()
   const [unreadTotal, setUnreadTotal] = useState(0)
+  // Starts at 0 (not the current total) so that any unread messages already
+  // waiting the moment the app loads/logs in still get announced once —
+  // otherwise a login right after someone messages you shows the badge but
+  // silently skips the popup, which reads as "no notification at all".
   const prevTotalRef = useRef(0)
-  const firstLoadRef = useRef(true)
 
   useEffect(() => {
     if (!meKey) return
@@ -116,7 +119,7 @@ export function useUnreadMessages(meKey: string | null) {
         const convos: Record<string, any>[] = data.docs || []
         const total = convos.reduce((sum, c) => sum + (c.unreadCounts?.[meKey!] || 0), 0)
 
-        if (!firstLoadRef.current && total > prevTotalRef.current) {
+        if (total > prevTotalRef.current) {
           const withNew = convos.find((c) => (c.unreadCounts?.[meKey!] || 0) > 0)
           if (withNew) {
             const who = withNew.lastMessageSenderName || 'Someone'
@@ -127,7 +130,6 @@ export function useUnreadMessages(meKey: string | null) {
             toast('You have a new message')
           }
         }
-        firstLoadRef.current = false
         prevTotalRef.current = total
         setUnreadTotal(total)
       } catch {
@@ -136,7 +138,7 @@ export function useUnreadMessages(meKey: string | null) {
     }
 
     poll()
-    const interval = setInterval(poll, 15000)
+    const interval = setInterval(poll, 10000)
     return () => {
       cancelled = true
       clearInterval(interval)
