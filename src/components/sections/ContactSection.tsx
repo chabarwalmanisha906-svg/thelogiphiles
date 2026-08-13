@@ -23,6 +23,7 @@ export function ContactSection({ settings }: { settings: SiteSettings }) {
           <p className="mt-4 font-heading text-lg font-bold tracking-tight text-navy">
             Let&apos;s fix it.
           </p>
+          <p className="mt-5 -rotate-2 font-hand text-xl text-mint">we reply fast, promise.</p>
 
           {settings.contactEmail && (
             <a

@@ -23,6 +23,7 @@ export function InsightsPreview({ items }: { items: PostItem[] }) {
             <p className="mt-4 font-heading text-lg font-semibold tracking-tight text-navy/60">
               WORDS ON OUR MIND.
             </p>
+            <span className="mt-3 inline-block -rotate-2 font-hand text-xl text-mint">fresh thoughts, weekly-ish</span>
           </div>
 
           <Link

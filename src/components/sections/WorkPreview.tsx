@@ -25,16 +25,19 @@ export function WorkPreview({ items }: { items: WorkItem[] }) {
             </p>
           </div>
 
-          <Link
-            href="/work"
-            data-cursor="EXPLORE →"
-            className="group inline-flex items-center gap-2 font-heading text-sm font-semibold tracking-[0.08em] text-navy"
-          >
-            VIEW ALL WORK
-            <span className="transition-transform duration-300 group-hover:translate-x-1.5">
-              →
-            </span>
-          </Link>
+          <div className="flex flex-col items-start gap-2 md:items-end">
+            <Link
+              href="/work"
+              data-cursor="EXPLORE →"
+              className="group inline-flex items-center gap-2 font-heading text-sm font-semibold tracking-[0.08em] text-navy"
+            >
+              VIEW ALL WORK
+              <span className="transition-transform duration-300 group-hover:translate-x-1.5">
+                →
+              </span>
+            </Link>
+            <span className="rotate-2 font-hand text-xl text-mint">our favourites, ranked shamelessly</span>
+          </div>
         </ScrollReveal>
 
         <WorkCarousel items={preview} />

@@ -7,6 +7,9 @@ export function Credentials({ settings }: { settings: SiteSettings }) {
   return (
     <section className="bg-offwhite px-6 py-24 md:px-10 md:py-32">
       <div className="mx-auto max-w-[1600px]">
+        <ScrollReveal>
+          <span className="mb-6 inline-block -rotate-1 font-hand text-xl text-mint">the numbers don&apos;t lie</span>
+        </ScrollReveal>
         <div className="grid grid-cols-2 border-l border-t border-navy/15 md:grid-cols-4">
           {stats.map((stat, i) => (
             <ScrollReveal key={stat.label} delay={i * 0.06}>
