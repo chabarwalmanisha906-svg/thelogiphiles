@@ -1436,6 +1436,7 @@ function TeamPage({
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({})
   const [createdCreds, setCreatedCreds] = useState<{ name: string; email: string; password: string } | null>(null)
   const [passwordField, setPasswordField] = useState('')
+  const [selected, setSelected] = useState<Doc | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -1503,10 +1504,10 @@ function TeamPage({
       />
 
       <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
-        <table className="w-full min-w-[760px]">
+        <table className="w-full min-w-[880px]">
           <thead>
             <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
-              {['Member', 'Department', 'Role', 'Status', 'Tasks'].map((h) => (
+              {['Member', 'Employee ID', 'Department', 'Role', 'Status', 'Tasks', ''].map((h) => (
                 <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
                   {h}
                 </th>
@@ -1518,23 +1519,37 @@ function TeamPage({
               <tr key={emp.id} className="border-b border-navy/10 font-body text-sm last:border-0">
                 <td className="px-4 py-3.5">
                   <div className="flex items-center gap-3 font-bold text-navy">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-md bg-mint/10 font-heading text-xs font-extrabold text-mint">
-                      {initials(emp.name)}
-                    </span>
+                    {emp.photo?.url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={emp.photo.url} alt="" className="h-8 w-8 shrink-0 rounded-md object-cover" />
+                    ) : (
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-mint/10 font-heading text-xs font-extrabold text-mint">
+                        {initials(emp.name)}
+                      </span>
+                    )}
                     {emp.name}
                   </div>
                 </td>
+                <td className="px-4 py-3.5 text-navy/50">{emp.employeeId || '—'}</td>
                 <td className="px-4 py-3.5 text-navy/70">{emp.department || '—'}</td>
                 <td className="px-4 py-3.5 text-navy/70">{emp.role || '—'}</td>
                 <td className="px-4 py-3.5">
                   <Badge color={emp.active ? 'green' : 'gray'}>{emp.active ? 'Active' : 'Inactive'}</Badge>
                 </td>
                 <td className="px-4 py-3.5 text-navy/70">{taskCounts[String(emp.id)] || 0}</td>
+                <td className="px-4 py-3.5">
+                  <button
+                    onClick={() => setSelected(emp)}
+                    className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
+                  >
+                    View Profile
+                  </button>
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                <td colSpan={7} className="px-4 py-8 text-center font-body text-sm text-navy/40">
                   No team members yet.
                 </td>
               </tr>
@@ -1630,7 +1645,233 @@ function TeamPage({
           </div>
         )}
       </Modal>
+
+      {selected && (
+        <EmployeeProfileModal
+          employee={selected}
+          onClose={() => setSelected(null)}
+          toast={toast}
+          onSaved={async (updated) => {
+            setSelected(updated)
+            await refresh()
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+/* ============================== EMPLOYEE PROFILE ============================== */
+
+const DOC_FOLDERS = [
+  { value: 'documents', label: 'Documents' },
+  { value: 'brand-logos', label: 'Brand Logos' },
+  { value: 'canva-templates', label: 'Canva Templates' },
+  { value: 'video-assets', label: 'Video Assets' },
+  { value: 'other', label: 'Other' },
+]
+
+function EmployeeProfileModal({
+  employee,
+  onClose,
+  toast,
+  onSaved,
+}: {
+  employee: Doc
+  onClose: () => void
+  toast: (m: string) => void
+  onSaved: (updated: Doc) => Promise<void>
+}) {
+  const [saving, setSaving] = useState(false)
+  const [files, setFiles] = useState<Doc[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [docLabel, setDocLabel] = useState('')
+  const [docFolder, setDocFolder] = useState('documents')
+
+  const loadFiles = useCallback(async () => {
+    const data = await api(`/employee-files?where[employee][equals]=${employee.id}&limit=200&sort=-createdAt`)
+    setFiles(data.docs || [])
+  }, [employee.id])
+
+  useEffect(() => {
+    loadFiles()
+  }, [loadFiles])
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    const form = new FormData(e.currentTarget)
+    try {
+      const photoFile = form.get('photo') as File | null
+      const payload: Record<string, unknown> = {
+        name: form.get('name'),
+        role: form.get('role'),
+        department: form.get('department'),
+        phone: form.get('phone'),
+        active: form.get('active') === 'on',
+      }
+      if (photoFile && photoFile.size > 0) {
+        payload.photo = Number(await uploadMedia(photoFile, form.get('name') as string))
+      }
+      const updated = await api(`/employees/${employee.id}`, { method: 'PATCH', body: JSON.stringify(payload) })
+      toast('Profile updated')
+      await onSaved(updated.doc)
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update profile')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDocUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const compressed = await compressImage(file)
+      const form = new FormData()
+      form.append('file', compressed)
+      form.append(
+        '_payload',
+        JSON.stringify({ label: docLabel.trim() || file.name, folder: docFolder, employee: Number(employee.id) }),
+      )
+      const res = await fetch('/api/employee-files', { method: 'POST', credentials: 'include', body: form })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.errors?.[0]?.message || 'Upload failed — try a smaller file')
+      }
+      toast('Document uploaded')
+      setDocLabel('')
+      await loadFiles()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  async function handleDocDelete(id: string) {
+    if (!confirm('Remove this document?')) return
+    try {
+      await api(`/employee-files/${id}`, { method: 'DELETE' })
+      setFiles((prev) => prev.filter((f) => f.id !== id))
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to remove document')
+    }
+  }
+
+  function copy(text: string) {
+    navigator.clipboard?.writeText(text)
+    toast('Copied to clipboard')
+  }
+
+  return (
+    <Modal open onClose={onClose} title="Employee Profile">
+      <div className="grid gap-6">
+        <form onSubmit={handleSubmit} className="grid gap-4" key={employee.id}>
+          <div className="flex items-center gap-4">
+            <ImagePickerField name="photo" required={false} existingUrl={employee.photo?.url} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Employee ID">
+              <input value={employee.employeeId || '—'} disabled className={`${inputClass} bg-offwhite/60 text-navy/50`} />
+            </Field>
+            <Field label="Login Email">
+              <div className="flex gap-2">
+                <input value={employee.email || ''} disabled className={`${inputClass} bg-offwhite/60 text-navy/50`} />
+                <button
+                  type="button"
+                  onClick={() => copy(employee.email || '')}
+                  className="shrink-0 rounded-md border border-navy/15 px-3 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
+                >
+                  Copy
+                </button>
+              </div>
+            </Field>
+          </div>
+
+          <Field label="Name">
+            <input name="name" defaultValue={employee.name} required className={inputClass} />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Designation">
+              <input name="role" defaultValue={employee.role} className={inputClass} />
+            </Field>
+            <Field label="Department">
+              <input name="department" defaultValue={employee.department} className={inputClass} />
+            </Field>
+          </div>
+
+          <Field label="Phone">
+            <input name="phone" defaultValue={employee.phone} className={inputClass} />
+          </Field>
+
+          <label className="flex items-center gap-2 font-body text-sm font-semibold text-navy">
+            <input type="checkbox" name="active" defaultChecked={employee.active} className="h-4 w-4" />
+            Active — can log in and access the workspace
+          </label>
+
+          <button disabled={saving} className="rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </form>
+
+        <div className="border-t border-navy/10 pt-5">
+          <h4 className="mb-3 font-heading text-sm font-extrabold text-navy">Documents</h4>
+
+          <div className="mb-4 grid grid-cols-[1fr_auto] gap-2 sm:grid-cols-[1fr_160px_auto]">
+            <input
+              value={docLabel}
+              onChange={(e) => setDocLabel(e.target.value)}
+              placeholder="Document label (optional)"
+              className={inputClass}
+            />
+            <select value={docFolder} onChange={(e) => setDocFolder(e.target.value)} className={inputClass}>
+              {DOC_FOLDERS.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md bg-mint px-4 py-2.5 font-heading text-[11px] font-bold uppercase text-white hover:bg-navy">
+              {uploading ? 'Uploading…' : 'Upload'}
+              <input type="file" className="hidden" onChange={handleDocUpload} disabled={uploading} />
+            </label>
+          </div>
+
+          <div className="rounded-lg border border-navy/10">
+            {files.length === 0 && <p className="px-4 py-6 text-center font-body text-sm text-navy/40">No documents yet.</p>}
+            {files.map((f) => (
+              <div key={f.id} className="flex items-center justify-between border-b border-navy/10 px-4 py-3 last:border-0">
+                <div className="min-w-0">
+                  <span className="block truncate font-body text-[13px] font-semibold text-navy">{f.label || f.filename}</span>
+                  <span className="font-body text-[11px] text-navy/40">{DOC_FOLDERS.find((d) => d.value === f.folder)?.label || f.folder}</span>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <a
+                    href={f.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
+                  >
+                    Download
+                  </a>
+                  <button
+                    onClick={() => handleDocDelete(f.id)}
+                    className="rounded-md border border-red-200 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-red-500 hover:bg-red-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Modal>
   )
 }
 

@@ -27,8 +27,28 @@ export const Employees: CollectionConfig = {
     create: ({ req }) => req.user?.collection === 'users',
     delete: ({ req }) => req.user?.collection === 'users',
   },
+  hooks: {
+    afterChange: [
+      async ({ doc, operation, req }) => {
+        if (operation === 'create' && !doc.employeeId) {
+          await req.payload.update({
+            collection: 'employees',
+            id: doc.id,
+            data: { employeeId: `TL-${String(doc.id).padStart(4, '0')}` },
+            req,
+          })
+        }
+      },
+    ],
+  },
   fields: [
     { name: 'name', type: 'text', required: true },
+    {
+      name: 'employeeId',
+      type: 'text',
+      unique: true,
+      admin: { position: 'sidebar', description: 'Auto-generated on creation.', readOnly: true },
+    },
     { name: 'role', type: 'text', label: 'Designation' },
     { name: 'department', type: 'text' },
     { name: 'phone', type: 'text', access: { read: fieldSelfOrAdmin } },

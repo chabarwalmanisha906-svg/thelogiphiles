@@ -179,9 +179,18 @@ function Shell() {
         </div>
 
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-4">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-mint bg-white/10 font-heading text-xs font-bold">
-            {initials(employee.name)}
-          </span>
+          {employee.photo?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={employee.photo.url}
+              alt=""
+              className="h-10 w-10 shrink-0 rounded-full border-2 border-mint object-cover"
+            />
+          ) : (
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-mint bg-white/10 font-heading text-xs font-bold">
+              {initials(employee.name)}
+            </span>
+          )}
           <div className="min-w-0">
             <h4 className="truncate font-heading text-[13px] font-bold text-white">{employee.name}</h4>
             <p className="truncate font-heading text-[10px] font-semibold uppercase tracking-wide text-mint">{employee.role || 'Employee'}</p>
