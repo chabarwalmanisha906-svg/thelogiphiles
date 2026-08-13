@@ -626,8 +626,23 @@ function ClientsPage({
 }) {
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [localClients, setLocalClients] = useState<Doc[]>(clients)
 
-  const filtered = clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+  useEffect(() => {
+    setLocalClients(clients)
+  }, [clients])
+
+  const filtered = localClients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+
+  async function updateStatus(id: string, status: string) {
+    setLocalClients((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)))
+    try {
+      await api(`/clients/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) })
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update status')
+      await refresh()
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -668,10 +683,10 @@ function ClientsPage({
       />
 
       <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
-        <StatCard label="Total" value={clients.length} />
-        <StatCard label="Active" value={clients.filter((c) => c.status === 'active').length} />
-        <StatCard label="Onboarding" value={clients.filter((c) => c.status === 'onboarding').length} />
-        <StatCard label="At Risk" value={clients.filter((c) => c.status === 'at-risk').length} />
+        <StatCard label="Total" value={localClients.length} />
+        <StatCard label="Active" value={localClients.filter((c) => c.status === 'active').length} />
+        <StatCard label="Onboarding" value={localClients.filter((c) => c.status === 'onboarding').length} />
+        <StatCard label="At Risk" value={localClients.filter((c) => c.status === 'at-risk').length} />
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
@@ -693,9 +708,15 @@ function ClientsPage({
                 <td className="px-4 py-3.5 text-navy/70">{formatDate(c.onboardedDate)}</td>
                 <td className="px-4 py-3.5 text-navy/70">{formatINR(c.value)}</td>
                 <td className="px-4 py-3.5">
-                  <Badge color={c.status === 'active' ? 'green' : c.status === 'at-risk' ? 'red' : 'yellow'}>
-                    {c.status || 'active'}
-                  </Badge>
+                  <select
+                    value={c.status || 'active'}
+                    onChange={(ev) => updateStatus(c.id, ev.target.value)}
+                    className="rounded-md border border-navy/15 bg-white px-2 py-1.5 font-body text-xs font-semibold text-navy"
+                  >
+                    <option value="active">Active</option>
+                    <option value="onboarding">Onboarding</option>
+                    <option value="at-risk">At Risk</option>
+                  </select>
                 </td>
               </tr>
             ))}

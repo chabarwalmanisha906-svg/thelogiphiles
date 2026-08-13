@@ -13,6 +13,47 @@ export const PitchProspects: CollectionConfig = {
     update: ({ req }) => req.user?.collection === 'users',
     delete: ({ req }) => req.user?.collection === 'users',
   },
+  hooks: {
+    afterChange: [
+      async ({ doc, previousDoc, operation, req }) => {
+        const justWon = doc.stage === 'won' && (operation === 'create' || previousDoc?.stage !== 'won')
+        if (!justWon) return
+
+        const existing = await req.payload.find({
+          collection: 'clients',
+          where: { name: { equals: doc.company } },
+          limit: 1,
+          req,
+        })
+
+        if (existing.docs[0]) {
+          const client = existing.docs[0]
+          await req.payload.update({
+            collection: 'clients',
+            id: client.id,
+            data: {
+              value: (client.value || 0) + (doc.value || 0),
+              status: client.status === 'at-risk' ? client.status : 'active',
+            },
+            req,
+          })
+        } else {
+          await req.payload.create({
+            collection: 'clients',
+            data: {
+              name: doc.company,
+              value: doc.value || 0,
+              status: 'active',
+              onboardedDate: new Date().toISOString(),
+              owner: doc.owner || undefined,
+              visible: false,
+            },
+            req,
+          })
+        }
+      },
+    ],
+  },
   fields: [
     { name: 'company', type: 'text', required: true },
     { name: 'decisionMaker', type: 'text', required: true },
