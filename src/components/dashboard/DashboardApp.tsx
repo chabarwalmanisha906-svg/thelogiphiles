@@ -399,7 +399,7 @@ function DashboardPage({
   const openTasks = tasks.filter((t) => t.status !== 'completed').length
   const activeClients = clients.filter((c) => c.status === 'active').length
   const pipeline = enquiries
-    .filter((e) => !['won', 'lost'].includes(e.stage))
+    .filter((e) => !['converted', 'closed'].includes(e.stage))
     .reduce((sum, e) => sum + (e.value || 0), 0)
 
   const statusCounts = ['todo', 'in-progress', 'review', 'completed'].map((s) => ({
@@ -410,7 +410,7 @@ function DashboardPage({
 
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
   const newThisWeek = enquiries.filter((e) => new Date(e.createdAt).getTime() > weekAgo).length
-  const hotLeads = enquiries.filter((e) => ['proposal', 'negotiation'].includes(e.stage)).length
+  const hotLeads = enquiries.filter((e) => e.stage === 'in-progress').length
 
   const firstName = (me.name || me.email || '').split(' ')[0]
 
@@ -490,7 +490,7 @@ function DashboardPage({
         <Card title="Pipeline">
           <div className="flex gap-3">
             <MiniKpi value={formatINR(pipeline)} label="Open value" />
-            <MiniKpi value={enquiries.filter((e) => e.stage === 'won').length} label="Won" />
+            <MiniKpi value={enquiries.filter((e) => e.stage === 'converted').length} label="Converted" />
           </div>
         </Card>
       </div>
@@ -530,18 +530,18 @@ function BusinessPage({ clients, toast }: { clients: Doc[]; toast: (m: string) =
     })()
   }, [])
 
-  const funnel = ['new', 'contacted', 'discovery', 'proposal', 'negotiation', 'won'].map((stage) => ({
+  const funnel = ['new', 'contacted', 'in-progress', 'converted', 'closed'].map((stage) => ({
     stage,
     count: enquiries.filter((e) => e.stage === stage).length,
   }))
   const receivables = invoices.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.amount, 0)
   const overdueInvoices = invoices.filter((i) => i.status === 'overdue')
   const overdueTasks = tasks.filter((t) => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'completed')
-  const hotEnquiries = enquiries.filter((e) => ['proposal', 'negotiation'].includes(e.stage))
+  const hotEnquiries = enquiries.filter((e) => e.stage === 'in-progress')
   const revenueMTD = invoices
     .filter((i) => i.status === 'paid' && new Date(i.issuedDate).getMonth() === new Date().getMonth())
     .reduce((s, i) => s + i.amount, 0)
-  const pipeline = enquiries.filter((e) => !['won', 'lost'].includes(e.stage)).reduce((s, e) => s + (e.value || 0), 0)
+  const pipeline = enquiries.filter((e) => !['converted', 'closed'].includes(e.stage)).reduce((s, e) => s + (e.value || 0), 0)
   const collectionRate = invoices.length
     ? Math.round((invoices.filter((i) => i.status === 'paid').length / invoices.length) * 100)
     : 0
@@ -853,11 +853,9 @@ function Client360Page({ clients }: { clients: Doc[] }) {
 const STAGE_OPTIONS = [
   { value: 'new', label: 'New' },
   { value: 'contacted', label: 'Contacted' },
-  { value: 'discovery', label: 'Discovery' },
-  { value: 'proposal', label: 'Proposal Sent' },
-  { value: 'negotiation', label: 'Negotiation' },
-  { value: 'won', label: 'Won' },
-  { value: 'lost', label: 'Lost' },
+  { value: 'in-progress', label: 'In Progress' },
+  { value: 'converted', label: 'Converted' },
+  { value: 'closed', label: 'Closed' },
 ]
 
 function EnquiriesPage({ search, toast }: { search: string; toast: (m: string) => void }) {
@@ -922,15 +920,15 @@ function EnquiriesPage({ search, toast }: { search: string; toast: (m: string) =
       <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
         <StatCard label="New" value={enquiries.filter((e) => e.stage === 'new').length} />
         <StatCard label="Contacted" value={enquiries.filter((e) => e.stage === 'contacted').length} />
-        <StatCard label="Proposal" value={enquiries.filter((e) => e.stage === 'proposal').length} />
-        <StatCard label="Pipeline" value={formatINR(enquiries.reduce((s, e) => s + (e.value || 0), 0))} />
+        <StatCard label="In Progress" value={enquiries.filter((e) => e.stage === 'in-progress').length} />
+        <StatCard label="Converted" value={enquiries.filter((e) => e.stage === 'converted').length} />
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
-        <table className="w-full min-w-[760px]">
+        <table className="w-full min-w-[1080px]">
           <thead>
             <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
-              {['Lead', 'Company', 'Service', 'Value', 'Stage'].map((h) => (
+              {['Lead', 'Email', 'Phone', 'Message', 'Date/Time', 'Source', 'Status'].map((h) => (
                 <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
                   {h}
                 </th>
@@ -940,10 +938,19 @@ function EnquiriesPage({ search, toast }: { search: string; toast: (m: string) =
           <tbody>
             {filtered.map((e) => (
               <tr key={e.id} className="border-b border-navy/10 font-body text-sm last:border-0">
-                <td className="px-4 py-3.5 font-bold text-navy">{e.name}</td>
-                <td className="px-4 py-3.5 text-navy/70">{e.company || '—'}</td>
-                <td className="px-4 py-3.5 text-navy/70">{e.service || '—'}</td>
-                <td className="px-4 py-3.5 text-navy/70">{formatINR(e.value)}</td>
+                <td className="px-4 py-3.5 font-bold text-navy">
+                  {e.name}
+                  {e.company && <span className="block font-normal text-navy/40">{e.company}</span>}
+                </td>
+                <td className="px-4 py-3.5 text-navy/70">{e.email || '—'}</td>
+                <td className="px-4 py-3.5 text-navy/70">{e.phone || '—'}</td>
+                <td className="max-w-[220px] px-4 py-3.5 text-navy/70">
+                  <span className="line-clamp-2">{e.message || '—'}</span>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3.5 text-navy/70">
+                  {e.createdAt ? new Date(e.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                </td>
+                <td className="px-4 py-3.5 text-navy/70">{e.source || '—'}</td>
                 <td className="px-4 py-3.5">
                   <select
                     value={e.stage}
@@ -961,7 +968,7 @@ function EnquiriesPage({ search, toast }: { search: string; toast: (m: string) =
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                <td colSpan={7} className="px-4 py-8 text-center font-body text-sm text-navy/40">
                   No enquiries yet.
                 </td>
               </tr>
@@ -1174,16 +1181,16 @@ function SalesPage() {
   }))
   const maxRevenue = Math.max(1, ...monthlyRevenue.map((m) => m.total))
 
-  const won = enquiries.filter((e) => e.stage === 'won').length
+  const won = enquiries.filter((e) => e.stage === 'converted').length
   const total = enquiries.length || 1
   const conversion = Math.round((won / total) * 100)
-  const pipeline = enquiries.filter((e) => !['won', 'lost'].includes(e.stage)).reduce((s, e) => s + (e.value || 0), 0)
+  const pipeline = enquiries.filter((e) => !['converted', 'closed'].includes(e.stage)).reduce((s, e) => s + (e.value || 0), 0)
   const revenueMTD = invoices
     .filter((i) => i.status === 'paid' && new Date(i.issuedDate).getMonth() === new Date().getMonth())
     .reduce((s, i) => s + i.amount, 0)
-  const avgDeal = won ? Math.round(enquiries.filter((e) => e.stage === 'won').reduce((s, e) => s + (e.value || 0), 0) / won) : 0
+  const avgDeal = won ? Math.round(enquiries.filter((e) => e.stage === 'converted').reduce((s, e) => s + (e.value || 0), 0) / won) : 0
 
-  const funnelValue = STAGE_OPTIONS.filter((s) => !['won', 'lost'].includes(s.value)).map((s) => ({
+  const funnelValue = STAGE_OPTIONS.filter((s) => !['converted', 'closed'].includes(s.value)).map((s) => ({
     label: s.label,
     value: enquiries.filter((e) => e.stage === s.value).reduce((sum, e) => sum + (e.value || 0), 0),
   }))

@@ -46,6 +46,7 @@ export async function POST(request: Request) {
         phone: phone || undefined,
         service: service || undefined,
         message,
+        source: 'Website Contact Form',
         emailSent: false,
       },
     })
