@@ -45,6 +45,7 @@ import {
   SectionHead,
   compressImage,
   ImagePickerField,
+  useUnreadMessages,
 } from './ui'
 
 type Doc = Record<string, any>
@@ -176,6 +177,7 @@ function Shell() {
   const [search, setSearch] = useState('')
   const [employees, setEmployees] = useState<Doc[]>([])
   const [clients, setClients] = useState<Doc[]>([])
+  const unreadMessages = useUnreadMessages(me ? `users:${me.id}` : null)
 
   useEffect(() => {
     ;(async () => {
@@ -267,6 +269,11 @@ function Shell() {
                     }`}
                   >
                     <Icon size={16} /> {item.label}
+                    {item.id === 'messages' && unreadMessages > 0 && (
+                      <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 font-heading text-[10px] font-bold text-white">
+                        {unreadMessages > 99 ? '99+' : unreadMessages}
+                      </span>
+                    )}
                   </button>
                 )
               })}

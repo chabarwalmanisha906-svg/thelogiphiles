@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { UploadCloud } from 'lucide-react'
 
 export async function api(path: string, options?: RequestInit) {
@@ -93,6 +93,57 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       </div>
     </ToastContext.Provider>
   )
+}
+
+// Polls unread message counts (denormalized on each Conversation) so a nav
+// badge + toast can surface new messages even when the Messages tab isn't
+// open — a notification only visible inside an already-open chat panel
+// doesn't count as one.
+export function useUnreadMessages(meKey: string | null) {
+  const toast = useToast()
+  const [unreadTotal, setUnreadTotal] = useState(0)
+  const prevTotalRef = useRef(0)
+  const firstLoadRef = useRef(true)
+
+  useEffect(() => {
+    if (!meKey) return
+    let cancelled = false
+
+    async function poll() {
+      try {
+        const data = await api(`/conversations?where[memberKeys][equals]=${encodeURIComponent(meKey!)}&limit=100`)
+        if (cancelled) return
+        const convos: Record<string, any>[] = data.docs || []
+        const total = convos.reduce((sum, c) => sum + (c.unreadCounts?.[meKey!] || 0), 0)
+
+        if (!firstLoadRef.current && total > prevTotalRef.current) {
+          const withNew = convos.find((c) => (c.unreadCounts?.[meKey!] || 0) > 0)
+          if (withNew) {
+            const who = withNew.lastMessageSenderName || 'Someone'
+            const where = withNew.isGroup ? ` in ${withNew.title || 'a group'}` : ''
+            const preview = withNew.lastMessagePreview ? `: ${withNew.lastMessagePreview}` : ''
+            toast(`New message from ${who}${where}${preview}`)
+          } else {
+            toast('You have a new message')
+          }
+        }
+        firstLoadRef.current = false
+        prevTotalRef.current = total
+        setUnreadTotal(total)
+      } catch {
+        // transient poll failure — try again next tick
+      }
+    }
+
+    poll()
+    const interval = setInterval(poll, 15000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [meKey, toast])
+
+  return unreadTotal
 }
 
 export function StatCard({

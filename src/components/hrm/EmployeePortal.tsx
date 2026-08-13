@@ -33,6 +33,7 @@ import {
   Field,
   inputClass,
   compressImage,
+  useUnreadMessages,
 } from '@/components/dashboard/ui'
 const ChatPanel = dynamic(() => import('@/components/chat/ChatPanel').then((m) => m.ChatPanel), {
   loading: () => <p className="font-body text-sm text-navy/40">Loading messages…</p>,
@@ -95,6 +96,7 @@ function Shell() {
   const [tasks, setTasks] = useState<Doc[]>([])
   const [actionLoading, setActionLoading] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const unreadMessages = useUnreadMessages(employee ? `employees:${employee.id}` : null)
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
@@ -248,6 +250,11 @@ function Shell() {
                 }`}
               >
                 <Icon size={16} /> {item.label}
+                {item.id === 'messages' && unreadMessages > 0 && (
+                  <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 font-heading text-[10px] font-bold text-white">
+                    {unreadMessages > 99 ? '99+' : unreadMessages}
+                  </span>
+                )}
               </button>
             )
           })}

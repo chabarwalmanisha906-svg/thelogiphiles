@@ -18,6 +18,18 @@ export const Conversations: CollectionConfig = {
     },
     delete: ({ req }) => req.user?.collection === 'users',
   },
+  hooks: {
+    beforeChange: [
+      ({ data, originalDoc }) => {
+        // Notification pings send only the requester's own key so they never
+        // clobber other members' unread counts with a stale snapshot.
+        if (data.unreadCounts && originalDoc?.unreadCounts) {
+          data.unreadCounts = { ...originalDoc.unreadCounts, ...data.unreadCounts }
+        }
+        return data
+      },
+    ],
+  },
   fields: [
     { name: 'title', type: 'text' },
     { name: 'isGroup', type: 'checkbox', defaultValue: false },
@@ -27,6 +39,15 @@ export const Conversations: CollectionConfig = {
       hasMany: true,
       required: true,
       admin: { description: "Format: 'users:1' or 'employees:3'" },
+    },
+    { name: 'lastMessageAt', type: 'date', admin: { position: 'sidebar' } },
+    { name: 'lastMessagePreview', type: 'text', admin: { position: 'sidebar' } },
+    { name: 'lastMessageSenderName', type: 'text', admin: { position: 'sidebar' } },
+    {
+      name: 'unreadCounts',
+      type: 'json',
+      defaultValue: {},
+      admin: { position: 'sidebar', description: "Map of 'users:1' / 'employees:3' -> unread count" },
     },
   ],
 }

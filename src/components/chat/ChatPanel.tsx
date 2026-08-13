@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Users as UsersIcon, SquarePen, Video, Paperclip, Send, X, FileText, Download } from 'lucide-react'
+import { Users as UsersIcon, SquarePen, Video, Paperclip, Send, X, FileText, Download, Info, UserPlus, UserMinus, Pencil, Check } from 'lucide-react'
 import { api, Modal, Field, inputClass, useToast, compressImage } from '@/components/dashboard/ui'
 
 type Doc = Record<string, any>
@@ -23,6 +23,7 @@ export function ChatPanel({ me }: { me: Me }) {
   const [text, setText] = useState('')
   const [groupOpen, setGroupOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [detailsOpen, setDetailsOpen] = useState(false)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
   const historyRef = useRef<HTMLDivElement>(null)
@@ -38,13 +39,17 @@ export function ChatPanel({ me }: { me: Me }) {
   }, [meKey])
 
   const loadConversations = useCallback(async () => {
-    const data = await api(`/conversations?where[memberKeys][equals]=${encodeURIComponent(meKey)}&limit=100&sort=-createdAt`)
-    setConversations(data.docs || [])
+    const data = await api(`/conversations?where[memberKeys][equals]=${encodeURIComponent(meKey)}&limit=100`)
+    const docs: Doc[] = data.docs || []
+    docs.sort((a, b) => new Date(b.lastMessageAt || b.createdAt).getTime() - new Date(a.lastMessageAt || a.createdAt).getTime())
+    setConversations(docs)
   }, [meKey])
 
   useEffect(() => {
     loadDirectory()
     loadConversations()
+    const interval = setInterval(loadConversations, 8000)
+    return () => clearInterval(interval)
   }, [loadDirectory, loadConversations])
 
   const loadMessages = useCallback(async (conversationId: string) => {
@@ -58,6 +63,16 @@ export function ChatPanel({ me }: { me: Me }) {
     const interval = setInterval(() => loadMessages(activeId), 5000)
     return () => clearInterval(interval)
   }, [activeId, loadMessages])
+
+  // Mark the opened conversation as read — merged server-side so this never
+  // clobbers another member's own unread count.
+  useEffect(() => {
+    if (!activeId) return
+    setConversations((prev) =>
+      prev.map((c) => (String(c.id) === activeId ? { ...c, unreadCounts: { ...c.unreadCounts, [meKey]: 0 } } : c)),
+    )
+    api(`/conversations/${activeId}`, { method: 'PATCH', body: JSON.stringify({ unreadCounts: { [meKey]: 0 } }) }).catch(() => {})
+  }, [activeId, meKey])
 
   useEffect(() => {
     if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight
@@ -159,6 +174,31 @@ export function ChatPanel({ me }: { me: Me }) {
     setActiveId(String(created.doc.id))
   }
 
+  async function handleAddMember(conv: Doc, key: string) {
+    const memberKeys = [...(conv.memberKeys || []), key]
+    const updated = await api(`/conversations/${conv.id}`, { method: 'PATCH', body: JSON.stringify({ memberKeys }) })
+    setConversations((prev) => prev.map((c) => (c.id === conv.id ? updated.doc : c)))
+    toast('Member added to group')
+  }
+
+  async function handleRemoveMember(conv: Doc, key: string) {
+    const memberKeys = (conv.memberKeys || []).filter((k: string) => k !== key)
+    if (memberKeys.length === 0) {
+      toast('A group needs at least one member')
+      return
+    }
+    const updated = await api(`/conversations/${conv.id}`, { method: 'PATCH', body: JSON.stringify({ memberKeys }) })
+    setConversations((prev) => prev.map((c) => (c.id === conv.id ? updated.doc : c)))
+    toast('Member removed from group')
+  }
+
+  async function handleRenameGroup(conv: Doc, title: string) {
+    if (!title.trim() || title === conv.title) return
+    const updated = await api(`/conversations/${conv.id}`, { method: 'PATCH', body: JSON.stringify({ title: title.trim() }) })
+    setConversations((prev) => prev.map((c) => (c.id === conv.id ? updated.doc : c)))
+    toast('Group renamed')
+  }
+
   const activeConv = conversations.find((c) => String(c.id) === activeId)
 
   return (
@@ -176,23 +216,39 @@ export function ChatPanel({ me }: { me: Me }) {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {conversations.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setActiveId(String(c.id))}
-              className={`flex w-full items-center gap-3 border-b border-navy/10 px-5 py-3.5 text-left transition-colors ${
-                String(c.id) === activeId ? 'border-l-[3px] border-l-mint bg-mint/10' : 'hover:bg-navy/5'
-              }`}
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy font-heading text-[11px] font-bold text-white">
-                {c.isGroup ? <UsersIcon size={14} /> : initials(conversationLabel(c))}
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate font-body text-[13px] font-bold text-navy">{conversationLabel(c)}</span>
-              </span>
-            </button>
-          ))}
+          {conversations.map((c) => {
+            const unread = c.unreadCounts?.[meKey] || 0
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setActiveId(String(c.id))}
+                className={`flex w-full items-center gap-3 border-b border-navy/10 px-5 py-3.5 text-left transition-colors ${
+                  String(c.id) === activeId ? 'border-l-[3px] border-l-mint bg-mint/10' : 'hover:bg-navy/5'
+                }`}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy font-heading text-[11px] font-bold text-white">
+                  {c.isGroup ? <UsersIcon size={14} /> : initials(conversationLabel(c))}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className={`block truncate font-body text-[13px] text-navy ${unread > 0 ? 'font-extrabold' : 'font-bold'}`}>
+                    {conversationLabel(c)}
+                  </span>
+                  {c.lastMessagePreview && (
+                    <span className={`block truncate font-body text-[11px] ${unread > 0 ? 'font-semibold text-navy/70' : 'text-navy/40'}`}>
+                      {c.isGroup && c.lastMessageSenderName ? `${c.lastMessageSenderName}: ` : ''}
+                      {c.lastMessagePreview}
+                    </span>
+                  )}
+                </span>
+                {unread > 0 && (
+                  <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 font-heading text-[10px] font-bold text-white">
+                    {unread > 99 ? '99+' : unread}
+                  </span>
+                )}
+              </button>
+            )
+          })}
           {conversations.length === 0 && (
             <p className="px-5 py-6 font-body text-xs text-navy/40">No conversations yet. Start one with the pencil icon.</p>
           )}
@@ -206,13 +262,25 @@ export function ChatPanel({ me }: { me: Me }) {
               <span className="flex items-center gap-2 font-heading text-[15px] font-extrabold text-navy">
                 <span className="h-2.5 w-2.5 rounded-full bg-mint" /> {conversationLabel(activeConv)}
               </span>
-              <button
-                type="button"
-                onClick={() => window.open('https://meet.google.com/new', '_blank')}
-                className="flex items-center gap-1.5 rounded-md bg-mint px-3 py-2 font-heading text-[11px] font-bold uppercase text-white hover:bg-navy"
-              >
-                <Video size={13} /> Start Meet
-              </button>
+              <div className="flex items-center gap-2">
+                {activeConv.isGroup && (
+                  <button
+                    type="button"
+                    title="Group details"
+                    onClick={() => setDetailsOpen(true)}
+                    className="flex items-center gap-1.5 rounded-md border border-navy/15 px-3 py-2 font-heading text-[11px] font-bold uppercase text-navy hover:bg-navy/5"
+                  >
+                    <Info size={13} /> Group Info
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => window.open('https://meet.google.com/new', '_blank')}
+                  className="flex items-center gap-1.5 rounded-md bg-mint px-3 py-2 font-heading text-[11px] font-bold uppercase text-white hover:bg-navy"
+                >
+                  <Video size={13} /> Start Meet
+                </button>
+              </div>
             </div>
 
             <div ref={historyRef} className="flex flex-1 flex-col gap-3 overflow-y-auto bg-offwhite/40 p-5">
@@ -337,6 +405,148 @@ export function ChatPanel({ me }: { me: Me }) {
           </button>
         </form>
       </Modal>
+
+      {activeConv?.isGroup && (
+        <GroupDetailsModal
+          open={detailsOpen}
+          onClose={() => setDetailsOpen(false)}
+          conv={activeConv}
+          messageCount={messages.length}
+          contacts={contacts}
+          contactName={contactName}
+          onRename={(title) => handleRenameGroup(activeConv, title)}
+          onAddMember={(key) => handleAddMember(activeConv, key)}
+          onRemoveMember={(key) => handleRemoveMember(activeConv, key)}
+        />
+      )}
     </div>
+  )
+}
+
+function GroupDetailsModal({
+  open,
+  onClose,
+  conv,
+  messageCount,
+  contacts,
+  contactName,
+  onRename,
+  onAddMember,
+  onRemoveMember,
+}: {
+  open: boolean
+  onClose: () => void
+  conv: Doc
+  messageCount: number
+  contacts: Contact[]
+  contactName: (key: string) => string
+  onRename: (title: string) => void | Promise<void>
+  onAddMember: (key: string) => void | Promise<void>
+  onRemoveMember: (key: string) => void | Promise<void>
+}) {
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleValue, setTitleValue] = useState(conv.title || '')
+  const [addOpen, setAddOpen] = useState(false)
+
+  useEffect(() => {
+    setTitleValue(conv.title || '')
+    setEditingTitle(false)
+    setAddOpen(false)
+  }, [conv.id, conv.title])
+
+  const members: string[] = conv.memberKeys || []
+  const addable = contacts.filter((c) => !members.includes(c.key))
+
+  return (
+    <Modal open={open} onClose={onClose} title="Group Details">
+      <div className="grid gap-5">
+        <div>
+          <span className="font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">Group Name</span>
+          {editingTitle ? (
+            <div className="mt-1 flex gap-2">
+              <input value={titleValue} onChange={(e) => setTitleValue(e.target.value)} className={inputClass} autoFocus />
+              <button
+                type="button"
+                onClick={() => {
+                  onRename(titleValue)
+                  setEditingTitle(false)
+                }}
+                className="shrink-0 rounded-md bg-mint px-3 text-white hover:bg-navy"
+              >
+                <Check size={16} />
+              </button>
+            </div>
+          ) : (
+            <div className="mt-1 flex items-center justify-between">
+              <span className="font-heading text-base font-extrabold text-navy">{conv.title || 'Group'}</span>
+              <button type="button" onClick={() => setEditingTitle(true)} className="text-navy/40 hover:text-mint">
+                <Pencil size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 rounded-lg border border-navy/10 bg-offwhite/60 p-4">
+          <div>
+            <span className="block font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">Created</span>
+            <span className="font-body text-sm font-semibold text-navy">
+              {new Date(conv.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </span>
+          </div>
+          <div>
+            <span className="block font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">Recent Activity</span>
+            <span className="font-body text-sm font-semibold text-navy">{messageCount} messages</span>
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
+              Members ({members.length})
+            </span>
+            <button
+              type="button"
+              onClick={() => setAddOpen((v) => !v)}
+              className="flex items-center gap-1 font-heading text-[11px] font-bold uppercase text-mint hover:text-navy"
+            >
+              <UserPlus size={13} /> Add
+            </button>
+          </div>
+
+          {addOpen && (
+            <div className="mb-3 grid max-h-32 gap-1 overflow-y-auto rounded-md border border-navy/10 p-2">
+              {addable.length === 0 && <p className="px-2 py-1 font-body text-xs text-navy/40">Everyone is already in this group.</p>}
+              {addable.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => onAddMember(c.key)}
+                  className="flex items-center justify-between rounded px-2 py-1.5 text-left font-body text-sm text-navy hover:bg-mint/10"
+                >
+                  {c.name}
+                  <UserPlus size={13} className="text-mint" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="grid max-h-56 gap-1 overflow-y-auto">
+            {members.map((key) => (
+              <div key={key} className="flex items-center justify-between rounded-md px-2 py-2 hover:bg-offwhite/60">
+                <span className="flex items-center gap-2.5 font-body text-sm text-navy">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-navy font-heading text-[10px] font-bold text-white">
+                    {initials(contactName(key))}
+                  </span>
+                  {contactName(key)}
+                </span>
+                <button type="button" onClick={() => onRemoveMember(key)} className="text-navy/30 hover:text-red-500" title="Remove from group">
+                  <UserMinus size={15} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Modal>
   )
 }
