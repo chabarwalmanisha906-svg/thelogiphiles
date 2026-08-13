@@ -42,6 +42,7 @@ yarn-error.log*
 # payload uploads (local dev only — use cloud storage in production)
 /media/
 /employee-files/
+/chat-attachments/
 
 # typescript
 *.tsbuildinfo

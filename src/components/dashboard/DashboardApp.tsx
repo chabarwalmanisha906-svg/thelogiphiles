@@ -1399,6 +1399,7 @@ function TeamPage({
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({})
+  const [createdCreds, setCreatedCreds] = useState<{ name: string; email: string; password: string } | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -1423,25 +1424,33 @@ function TeamPage({
     setSaving(true)
     const form = new FormData(e.currentTarget)
     const password = randomPassword()
+    const name = String(form.get('name') || '')
+    const email = String(form.get('email') || '')
     try {
       await api('/employees', {
         method: 'POST',
         body: JSON.stringify({
-          name: form.get('name'),
-          email: form.get('email'),
+          name,
+          email,
           password,
           department: form.get('department'),
           role: form.get('role'),
         }),
       })
-      toast(`Team member added. Temporary password: ${password}`)
+      toast('Team member added')
       setOpen(false)
+      setCreatedCreds({ name, email, password })
       await refresh()
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Failed to add team member')
     } finally {
       setSaving(false)
     }
+  }
+
+  function copy(text: string) {
+    navigator.clipboard?.writeText(text)
+    toast('Copied to clipboard')
   }
 
   return (
@@ -1518,6 +1527,52 @@ function TeamPage({
             {saving ? 'Creating…' : 'Create Member'}
           </button>
         </form>
+      </Modal>
+
+      <Modal open={!!createdCreds} onClose={() => setCreatedCreds(null)} title="Team Member Created">
+        {createdCreds && (
+          <div className="grid gap-4">
+            <p className="font-body text-sm text-navy/70">
+              Share these login details with <strong className="text-navy">{createdCreds.name}</strong>. For
+              security, this password cannot be shown again once you close this window — the employee should
+              change it after first login.
+            </p>
+            <div className="grid gap-3 rounded-lg border border-navy/10 bg-offwhite/60 p-4">
+              <div>
+                <span className="font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">Login Email</span>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <span className="font-body text-sm font-semibold text-navy">{createdCreds.email}</span>
+                  <button
+                    type="button"
+                    onClick={() => copy(createdCreds.email)}
+                    className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-white"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+              <div>
+                <span className="font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">Temporary Password</span>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <span className="font-mono text-sm font-semibold text-navy">{createdCreds.password}</span>
+                  <button
+                    type="button"
+                    onClick={() => copy(createdCreds.password)}
+                    className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-white"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setCreatedCreds(null)}
+              className="rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy"
+            >
+              Done
+            </button>
+          </div>
+        )}
       </Modal>
     </div>
   )
