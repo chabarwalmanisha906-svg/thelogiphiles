@@ -15,6 +15,7 @@ import {
   LogIn as LogInIcon,
   Bell,
   Check,
+  Camera,
   UploadCloud,
   Download,
   FileText,
@@ -93,6 +94,7 @@ function Shell() {
   const [history, setHistory] = useState<Doc[]>([])
   const [tasks, setTasks] = useState<Doc[]>([])
   const [actionLoading, setActionLoading] = useState(false)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
@@ -150,6 +152,35 @@ function Shell() {
     router.push('/hrm/login')
   }
 
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !employee) return
+    setUploadingPhoto(true)
+    try {
+      const compressed = await compressImage(file)
+      const form = new FormData()
+      form.append('file', compressed)
+      form.append('_payload', JSON.stringify({ alt: employee.name }))
+      const mediaRes = await fetch('/api/media', { method: 'POST', credentials: 'include', body: form })
+      if (!mediaRes.ok) {
+        const data = await mediaRes.json().catch(() => null)
+        throw new Error(data?.errors?.[0]?.message || 'Photo upload failed — try a smaller image')
+      }
+      const mediaData = await mediaRes.json()
+      const updated = await api(`/employees/${employee.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ photo: Number(mediaData.doc.id) }),
+      })
+      setEmployee(updated.doc)
+      toast('Profile photo updated')
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Photo upload failed')
+    } finally {
+      setUploadingPhoto(false)
+      e.target.value = ''
+    }
+  }
+
   if (loading || !employee) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -179,18 +210,24 @@ function Shell() {
         </div>
 
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-4">
-          {employee.photo?.url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={employee.photo.url}
-              alt=""
-              className="h-10 w-10 shrink-0 rounded-full border-2 border-mint object-cover"
-            />
-          ) : (
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-mint bg-white/10 font-heading text-xs font-bold">
-              {initials(employee.name)}
+          <label className="group relative shrink-0 cursor-pointer" title="Change profile photo">
+            {employee.photo?.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={employee.photo.url}
+                alt=""
+                className="h-10 w-10 rounded-full border-2 border-mint object-cover"
+              />
+            ) : (
+              <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-mint bg-white/10 font-heading text-xs font-bold">
+                {initials(employee.name)}
+              </span>
+            )}
+            <span className="absolute inset-0 flex items-center justify-center rounded-full bg-navy/70 opacity-0 transition-opacity group-hover:opacity-100">
+              <Camera size={14} className="text-white" />
             </span>
-          )}
+            <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={uploadingPhoto} />
+          </label>
           <div className="min-w-0">
             <h4 className="truncate font-heading text-[13px] font-bold text-white">{employee.name}</h4>
             <p className="truncate font-heading text-[10px] font-semibold uppercase tracking-wide text-mint">{employee.role || 'Employee'}</p>

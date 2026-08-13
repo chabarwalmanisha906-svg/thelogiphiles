@@ -1464,15 +1464,20 @@ function TeamPage({
     const name = String(form.get('name') || '')
     const email = String(form.get('email') || '')
     try {
+      const photoFile = form.get('photo') as File | null
+      const payload: Record<string, unknown> = {
+        name,
+        email,
+        password,
+        department: form.get('department'),
+        role: form.get('role'),
+      }
+      if (photoFile && photoFile.size > 0) {
+        payload.photo = Number(await uploadMedia(photoFile, name))
+      }
       await api('/employees', {
         method: 'POST',
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          department: form.get('department'),
-          role: form.get('role'),
-        }),
+        body: JSON.stringify(payload),
       })
       toast('Team member added')
       setOpen(false)
@@ -1560,6 +1565,9 @@ function TeamPage({
 
       <Modal open={open} onClose={() => setOpen(false)} title="Add Team Member">
         <form onSubmit={handleSubmit} className="grid gap-4">
+          <Field label="Profile Photo (optional)">
+            <ImagePickerField name="photo" required={false} />
+          </Field>
           <Field label="Name">
             <input name="name" required className={inputClass} />
           </Field>
