@@ -24,6 +24,7 @@ import { EmployeeFiles } from './collections/EmployeeFiles'
 import { Conversations } from './collections/Conversations'
 import { Messages } from './collections/Messages'
 import { ChatAttachments } from './collections/ChatAttachments'
+import { Meetings } from './collections/Meetings'
 import { SiteSettings } from './globals/SiteSettings'
 
 const filename = fileURLToPath(import.meta.url)
@@ -61,6 +62,7 @@ export default buildConfig({
     Conversations,
     Messages,
     ChatAttachments,
+    Meetings,
   ],
   globals: [SiteSettings],
   routes: {

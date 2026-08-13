@@ -46,6 +46,7 @@ import {
   compressImage,
   ImagePickerField,
   useUnreadMessages,
+  ScheduleMeetingModal,
 } from './ui'
 
 type Doc = Record<string, any>
@@ -1709,6 +1710,7 @@ function EmployeeProfileModal({
   const [uploading, setUploading] = useState(false)
   const [docLabel, setDocLabel] = useState('')
   const [docFolder, setDocFolder] = useState('documents')
+  const [meetingOpen, setMeetingOpen] = useState(false)
 
   const loadFiles = useCallback(async () => {
     const data = await api(`/employee-files?where[employee][equals]=${employee.id}&limit=200&sort=-createdAt`)
@@ -1808,6 +1810,14 @@ function EmployeeProfileModal({
           <div className="flex items-center gap-4">
             <ImagePickerField name="photo" required={false} existingUrl={employee.photo?.url} />
           </div>
+
+          <button
+            type="button"
+            onClick={() => setMeetingOpen(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-md border border-mint bg-mint/5 py-2.5 font-heading text-xs font-bold uppercase text-mint hover:bg-mint hover:text-white"
+          >
+            Schedule Meeting with {employee.name?.split(' ')[0]}
+          </button>
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Employee ID">
@@ -1917,6 +1927,14 @@ function EmployeeProfileModal({
           </div>
         </div>
       </div>
+
+      <ScheduleMeetingModal
+        open={meetingOpen}
+        onClose={() => setMeetingOpen(false)}
+        toast={toast}
+        candidates={[{ id: String(employee.id), name: employee.name, email: employee.email }]}
+        defaultSelectedIds={[String(employee.id)]}
+      />
     </Modal>
   )
 }

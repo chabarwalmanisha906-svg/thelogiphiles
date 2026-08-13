@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Users as UsersIcon, SquarePen, Video, Paperclip, Send, X, FileText, Download, Info, UserPlus, UserMinus, Pencil, Check } from 'lucide-react'
-import { api, Modal, Field, inputClass, useToast, compressImage } from '@/components/dashboard/ui'
+import { api, Modal, Field, inputClass, useToast, compressImage, ScheduleMeetingModal } from '@/components/dashboard/ui'
 
 type Doc = Record<string, any>
 type Me = { id: string; collection: 'users' | 'employees'; name: string }
-type Contact = { key: string; id: string; collection: 'users' | 'employees'; name: string }
+type Contact = { key: string; id: string; collection: 'users' | 'employees'; name: string; email?: string }
 
 function initials(name?: string) {
   if (!name) return '?'
@@ -24,6 +24,7 @@ export function ChatPanel({ me }: { me: Me }) {
   const [groupOpen, setGroupOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [meetingOpen, setMeetingOpen] = useState(false)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
   const historyRef = useRef<HTMLDivElement>(null)
@@ -32,7 +33,7 @@ export function ChatPanel({ me }: { me: Me }) {
   const loadDirectory = useCallback(async () => {
     const [emp, users] = await Promise.all([api('/employees?limit=200'), api('/users?limit=50')])
     const list: Contact[] = [
-      ...(emp.docs || []).map((e: Doc) => ({ key: `employees:${e.id}`, id: String(e.id), collection: 'employees' as const, name: e.name })),
+      ...(emp.docs || []).map((e: Doc) => ({ key: `employees:${e.id}`, id: String(e.id), collection: 'employees' as const, name: e.name, email: e.email })),
       ...(users.docs || []).map((u: Doc) => ({ key: `users:${u.id}`, id: String(u.id), collection: 'users' as const, name: u.name || u.email })),
     ].filter((c) => c.key !== meKey)
     setContacts(list)
@@ -273,13 +274,23 @@ export function ChatPanel({ me }: { me: Me }) {
                     <Info size={13} /> Group Info
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => window.open('https://meet.google.com/new', '_blank')}
-                  className="flex items-center gap-1.5 rounded-md bg-mint px-3 py-2 font-heading text-[11px] font-bold uppercase text-white hover:bg-navy"
-                >
-                  <Video size={13} /> Start Meet
-                </button>
+                {me.collection === 'users' ? (
+                  <button
+                    type="button"
+                    onClick={() => setMeetingOpen(true)}
+                    className="flex items-center gap-1.5 rounded-md bg-mint px-3 py-2 font-heading text-[11px] font-bold uppercase text-white hover:bg-navy"
+                  >
+                    <Video size={13} /> Start Meeting
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => window.open('https://meet.google.com/new', '_blank')}
+                    className="flex items-center gap-1.5 rounded-md bg-mint px-3 py-2 font-heading text-[11px] font-bold uppercase text-white hover:bg-navy"
+                  >
+                    <Video size={13} /> Start Meet
+                  </button>
+                )}
               </div>
             </div>
 
@@ -405,6 +416,21 @@ export function ChatPanel({ me }: { me: Me }) {
           </button>
         </form>
       </Modal>
+
+      {activeConv && me.collection === 'users' && (
+        <ScheduleMeetingModal
+          open={meetingOpen}
+          onClose={() => setMeetingOpen(false)}
+          toast={toast}
+          conversationId={activeId}
+          candidates={contacts
+            .filter((c) => c.collection === 'employees' && (activeConv.memberKeys || []).includes(c.key))
+            .map((c) => ({ id: c.id, name: c.name, email: c.email }))}
+          defaultSelectedIds={contacts
+            .filter((c) => c.collection === 'employees' && (activeConv.memberKeys || []).includes(c.key))
+            .map((c) => c.id)}
+        />
+      )}
 
       {activeConv?.isGroup && (
         <GroupDetailsModal

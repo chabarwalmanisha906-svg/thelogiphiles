@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { UploadCloud } from 'lucide-react'
+import { UploadCloud, Video, ExternalLink } from 'lucide-react'
 
 export async function api(path: string, options?: RequestInit) {
   const res = await fetch(`/api${path}`, {
@@ -242,6 +242,144 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 
 export const inputClass =
   'w-full rounded-md border border-navy/15 bg-offwhite px-3.5 py-2.5 font-body text-sm text-navy focus:border-mint focus:outline-none'
+
+export type MeetingCandidate = { id: string; name: string; email?: string }
+
+// Start Meeting -> Meeting Link Generated -> Employee Selected -> Automatic Email Sent.
+// Creating the Meeting doc triggers a Payload afterChange hook (see
+// collections/Meetings.ts) that emails every selected employee with the
+// link, date/time and message — this modal is just the "select + confirm" step.
+export function ScheduleMeetingModal({
+  open,
+  onClose,
+  candidates,
+  defaultSelectedIds = [],
+  conversationId,
+  toast,
+}: {
+  open: boolean
+  onClose: () => void
+  candidates: MeetingCandidate[]
+  defaultSelectedIds?: string[]
+  conversationId?: string
+  toast: (m: string) => void
+}) {
+  const [title, setTitle] = useState('')
+  const [link, setLink] = useState('')
+  const [when, setWhen] = useState('')
+  const [message, setMessage] = useState('')
+  const [selected, setSelected] = useState<string[]>(defaultSelectedIds)
+  const [sending, setSending] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      setTitle('')
+      setLink('')
+      setWhen('')
+      setMessage('')
+      setSelected(defaultSelectedIds)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  function toggle(id: string) {
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!title.trim() || !link.trim() || !when || selected.length === 0) {
+      toast('Add a title, link, date/time and at least one attendee')
+      return
+    }
+    setSending(true)
+    try {
+      const created = await api('/meetings', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: title.trim(),
+          link: link.trim(),
+          scheduledAt: new Date(when).toISOString(),
+          message: message.trim() || undefined,
+          attendees: selected.map(Number),
+          conversation: conversationId ? Number(conversationId) : undefined,
+        }),
+      })
+      toast(`Meeting invite sent to ${selected.length} ${selected.length === 1 ? 'person' : 'people'}`)
+      onClose()
+      return created.doc
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to send meeting invite')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Schedule Meeting">
+      <form onSubmit={handleSubmit} className="grid gap-4">
+        <Field label="Meeting title">
+          <input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="e.g. Weekly Sync" className={inputClass} />
+        </Field>
+
+        <Field label="Meeting link">
+          <div className="flex gap-2">
+            <input
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              required
+              placeholder="Paste the Google Meet link here"
+              className={inputClass}
+            />
+            <button
+              type="button"
+              onClick={() => window.open('https://meet.google.com/new', '_blank')}
+              title="Opens Google Meet in a new tab — copy the link it gives you back here"
+              className="flex shrink-0 items-center gap-1.5 rounded-md border border-navy/15 px-3 font-heading text-[11px] font-bold uppercase text-navy hover:bg-navy/5"
+            >
+              <Video size={14} /> Generate <ExternalLink size={11} />
+            </button>
+          </div>
+        </Field>
+
+        <Field label="Date & time">
+          <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} required className={inputClass} />
+        </Field>
+
+        <Field label="Message / instructions (optional)">
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={3}
+            placeholder="Anything attendees should prepare or know"
+            className={inputClass}
+          />
+        </Field>
+
+        <Field label={`Attendees (${selected.length} selected)`}>
+          <div className="grid max-h-44 gap-1 overflow-y-auto rounded-md border border-navy/10 p-2">
+            {candidates.length === 0 && <p className="px-2 py-1 font-body text-xs text-navy/40">No employees available.</p>}
+            {candidates.map((c) => (
+              <label key={c.id} className="flex items-center gap-2.5 rounded px-2 py-1.5 font-body text-sm text-navy hover:bg-offwhite">
+                <input type="checkbox" checked={selected.includes(c.id)} onChange={() => toggle(c.id)} className="h-4 w-4 accent-mint" />
+                {c.name}
+                {c.email && <span className="ml-auto font-body text-[11px] text-navy/40">{c.email}</span>}
+              </label>
+            ))}
+          </div>
+        </Field>
+
+        <p className="font-body text-xs text-navy/50">
+          Each selected employee gets an automatic email with the meeting link, date/time and your message.
+        </p>
+
+        <button disabled={sending} className="rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
+          {sending ? 'Sending Invite…' : 'Send Meeting Invite'}
+        </button>
+      </form>
+    </Modal>
+  )
+}
 
 export function Progress({ pct }: { pct: number }) {
   return (
