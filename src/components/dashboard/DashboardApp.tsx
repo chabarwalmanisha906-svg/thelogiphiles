@@ -329,7 +329,7 @@ function Shell() {
           )}
           {page === 'client360' && <Client360Page clients={clients} />}
           {page === 'enquiries' && <EnquiriesPage search={search} toast={toast} />}
-          {page === 'pitch' && <PitchPage search={search} toast={toast} />}
+          {page === 'pitch' && <PitchPage search={search} toast={toast} refreshClients={refreshClients} />}
           {page === 'sales' && <SalesPage />}
           {page === 'payments' && <PaymentsPage clients={clients} search={search} toast={toast} />}
           {page === 'team' && (
@@ -1026,7 +1026,15 @@ function EnquiriesPage({ search, toast }: { search: string; toast: (m: string) =
 
 /* ============================== PITCH CRM ============================== */
 
-function PitchPage({ search, toast }: { search: string; toast: (m: string) => void }) {
+function PitchPage({
+  search,
+  toast,
+  refreshClients,
+}: {
+  search: string
+  toast: (m: string) => void
+  refreshClients: () => Promise<void>
+}) {
   const [prospects, setProspects] = useState<Doc[]>([])
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -1045,6 +1053,12 @@ function PitchPage({ search, toast }: { search: string; toast: (m: string) => vo
   async function updateStage(id: string, stage: string) {
     setProspects((prev) => prev.map((p) => (p.id === id ? { ...p, stage } : p)))
     await api(`/pitch-prospects/${id}`, { method: 'PATCH', body: JSON.stringify({ stage }) })
+    // "won" fires a backend hook that creates/updates a Client — pull the
+    // fresh client list so the Clients page reflects it without a reload.
+    if (stage === 'won') {
+      await refreshClients()
+      toast('Prospect marked won — client value updated')
+    }
   }
 
   function composePitch(p: Doc) {
@@ -1421,6 +1435,7 @@ function TeamPage({
   const [saving, setSaving] = useState(false)
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({})
   const [createdCreds, setCreatedCreds] = useState<{ name: string; email: string; password: string } | null>(null)
+  const [passwordField, setPasswordField] = useState('')
 
   useEffect(() => {
     ;(async () => {
@@ -1444,7 +1459,7 @@ function TeamPage({
     e.preventDefault()
     setSaving(true)
     const form = new FormData(e.currentTarget)
-    const password = randomPassword()
+    const password = passwordField.trim() || randomPassword()
     const name = String(form.get('name') || '')
     const email = String(form.get('email') || '')
     try {
@@ -1460,6 +1475,7 @@ function TeamPage({
       })
       toast('Team member added')
       setOpen(false)
+      setPasswordField('')
       setCreatedCreds({ name, email, password })
       await refresh()
     } catch (err) {
@@ -1541,8 +1557,27 @@ function TeamPage({
           <Field label="Role / Designation">
             <input name="role" required className={inputClass} />
           </Field>
+          <Field label="Login Password">
+            <div className="flex gap-2">
+              <input
+                name="password"
+                value={passwordField}
+                onChange={(e) => setPasswordField(e.target.value)}
+                placeholder="Leave blank to auto-generate"
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={() => setPasswordField(randomPassword())}
+                className="shrink-0 rounded-md border border-navy/15 px-3 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
+              >
+                Generate
+              </button>
+            </div>
+          </Field>
           <p className="font-body text-xs text-navy/50">
-            A temporary password will be generated automatically and shown after saving.
+            Set this employee&apos;s password now, or leave it blank and one will be generated for you — either
+            way you&apos;ll see it again right after saving so you can share it with them.
           </p>
           <button disabled={saving} className="mt-2 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
             {saving ? 'Creating…' : 'Create Member'}
