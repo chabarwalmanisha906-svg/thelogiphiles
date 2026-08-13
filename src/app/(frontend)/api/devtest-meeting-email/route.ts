@@ -46,6 +46,11 @@ export async function GET() {
       sentTo: testEmail,
       emailResults: refetched.emailResults,
       hasResendKey: !!process.env.RESEND_API_KEY,
+      resendKeyLength: process.env.RESEND_API_KEY?.length || 0,
+      resendKeyPrefix: process.env.RESEND_API_KEY?.slice(0, 5) || null,
+      contactFromEmail: process.env.CONTACT_FROM_EMAIL,
+      contactToEmailRaw: JSON.stringify(process.env.CONTACT_TO_EMAIL),
+      allEnvKeys: Object.keys(process.env).filter((k) => /RESEND|CONTACT|BLOB|DATABASE/i.test(k)),
     })
   } finally {
     for (const c of cleanup.reverse()) {
