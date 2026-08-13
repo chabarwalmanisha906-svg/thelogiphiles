@@ -1,6 +1,6 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import {
-  Armchair,
   BookOpen,
   FileText,
   Languages,
@@ -87,7 +87,14 @@ export function WhoWeAre() {
                   </textPath>
                 </text>
               </svg>
-              <Armchair className="text-mint" size={24} strokeWidth={2} />
+              <Image
+                src="/logo.png"
+                alt="The Logiphiles"
+                width={24}
+                height={28}
+                unoptimized
+                className="h-7 w-auto object-contain"
+              />
             </div>
 
             <ScrollReveal delay={0.05} className="mt-8 sm:mt-0">
