@@ -111,3 +111,74 @@ export async function isGoogleDriveConnected(payload: Payload): Promise<boolean>
   const settings = await payload.findGlobal({ slug: 'google-integration' })
   return !!settings?.connected && !!settings?.refreshToken
 }
+
+async function listChildFolders(parentId: string, accessToken: string): Promise<{ id: string; name: string }[]> {
+  const q = encodeURIComponent(
+    `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+  )
+  const res = await fetch(`${DRIVE_API}?q=${q}&fields=files(id,name)&pageSize=1000`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => null)
+    throw new Error(data?.error?.message || 'Failed to list Drive folders')
+  }
+  const data = await res.json()
+  return data.files || []
+}
+
+async function findOrCreateChildFolder(name: string, parentId: string, accessToken: string): Promise<string> {
+  const children = await listChildFolders(parentId, accessToken)
+  const existing = children.find((c) => c.name === name)
+  if (existing) return existing.id
+  return createFolder(name, parentId, accessToken)
+}
+
+// Reverse sync: finds folders under the Workspace root in Drive that don't yet have a
+// matching Client record (e.g. someone made a folder by hand directly in Drive), and
+// creates the corresponding client so the Workspace stays a mirror of Drive both ways.
+// Manual/on-demand rather than a background job — Vercel's Hobby plan only allows
+// once-a-day Cron Jobs, and Drive's push-notification webhooks need a renewed watch
+// channel every <=7 days plus separate Search Console domain verification, which is a
+// lot of fragile infrastructure for a small team's folder list. A refresh button that
+// runs this on click is simpler and just as effective for this scale.
+export async function syncClientsFromDrive(payload: Payload): Promise<{ created: string[] }> {
+  const accessToken = await getAccessToken(payload)
+  if (!accessToken) throw new Error('Google Drive is not connected')
+
+  const rootId = await ensureWorkspaceRoot(payload, accessToken)
+  const driveFolders = await listChildFolders(rootId, accessToken)
+
+  const existing = await payload.find({
+    collection: 'clients',
+    where: { driveFolderId: { exists: true } },
+    limit: 1000,
+    depth: 0,
+  })
+  const knownFolderIds = new Set(existing.docs.map((c) => c.driveFolderId))
+
+  const created: string[] = []
+  for (const folder of driveFolders) {
+    if (knownFolderIds.has(folder.id)) continue
+
+    const [documentsFolderId, projectsFolderId] = await Promise.all([
+      findOrCreateChildFolder('Documents', folder.id, accessToken),
+      findOrCreateChildFolder('Projects', folder.id, accessToken),
+    ])
+
+    await payload.create({
+      collection: 'clients',
+      data: {
+        name: folder.name,
+        status: 'onboarding',
+        visible: false,
+        driveFolderId: folder.id,
+        driveDocumentsFolderId: documentsFolderId,
+        driveProjectsFolderId: projectsFolderId,
+      },
+    })
+    created.push(folder.name)
+  }
+
+  return { created }
+}

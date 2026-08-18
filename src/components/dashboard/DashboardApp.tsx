@@ -636,6 +636,7 @@ function ClientsPage({
   const [saving, setSaving] = useState(false)
   const [localClients, setLocalClients] = useState<Doc[]>(clients)
   const [driveStatus, setDriveStatus] = useState<{ connected: boolean; connectedEmail?: string } | null>(null)
+  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
     setLocalClients(clients)
@@ -700,6 +701,25 @@ function ClientsPage({
     }
   }
 
+  async function handleSyncFromDrive() {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/google/sync', { method: 'POST', credentials: 'include' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Sync failed')
+      toast(
+        data.created.length > 0
+          ? `Synced ${data.created.length} new folder(s) from Drive: ${data.created.join(', ')}`
+          : 'Already in sync — no new folders found in Drive',
+      )
+      await refresh()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Sync failed')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   return (
     <div>
       <SectionHead
@@ -722,12 +742,24 @@ function ClientsPage({
                 : 'Not connected. Connect Google Drive so every new client automatically gets a matching folder structure.'}
             </p>
           </div>
-          <a
-            href="/api/google/connect"
-            className="shrink-0 rounded-md bg-mint px-4 py-2.5 font-heading text-[11px] font-bold uppercase text-white hover:bg-navy"
-          >
-            {driveStatus.connected ? 'Reconnect' : 'Connect Google Drive'}
-          </a>
+          <div className="flex shrink-0 gap-2">
+            {driveStatus.connected && (
+              <button
+                type="button"
+                onClick={handleSyncFromDrive}
+                disabled={syncing}
+                className="rounded-md border border-navy/15 px-4 py-2.5 font-heading text-[11px] font-bold uppercase text-navy hover:bg-navy/5 disabled:opacity-60"
+              >
+                {syncing ? 'Syncing…' : 'Sync from Drive'}
+              </button>
+            )}
+            <a
+              href="/api/google/connect"
+              className="rounded-md bg-mint px-4 py-2.5 font-heading text-[11px] font-bold uppercase text-white hover:bg-navy"
+            >
+              {driveStatus.connected ? 'Reconnect' : 'Connect Google Drive'}
+            </a>
+          </div>
         </div>
       )}
 

@@ -29,7 +29,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             </p>
           </div>
 
-          <div className="grid grid-cols-5 gap-x-8 gap-y-5 text-center md:text-left">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5 text-center sm:grid-cols-3 md:grid-cols-5 md:gap-x-8 md:text-left">
             {FOOTER_COLUMNS.map((col) => (
               <Link
                 key={col.label}
@@ -40,7 +40,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
               </Link>
             ))}
 
-            <div className="col-span-5 h-px bg-white/15" />
+            <div className="col-span-2 h-px bg-white/15 sm:col-span-3 md:col-span-5" />
 
             {FOOTER_COLUMNS.map((col) => (
               <a
