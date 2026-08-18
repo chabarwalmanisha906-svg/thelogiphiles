@@ -1121,6 +1121,17 @@ function EnquiriesPage({ search, toast }: { search: string; toast: (m: string) =
 
 /* ============================== PITCH CRM ============================== */
 
+const PITCH_STAGES = [
+  { value: 'new', label: 'New', className: 'bg-navy/10 text-navy border-navy/20' },
+  { value: 'contacted', label: 'Contacted', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { value: 'pitch-sent', label: 'Pitch Sent', className: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { value: 'in-progress', label: 'In Progress', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { value: 'follow-up', label: 'Follow-up', className: 'bg-orange-50 text-orange-700 border-orange-200' },
+  { value: 'won', label: 'Won', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { value: 'lost', label: 'Lost', className: 'bg-red-50 text-red-700 border-red-200' },
+  { value: 'onboarded', label: 'Onboarded', className: 'bg-mint/10 text-mint border-mint/30' },
+]
+
 function PitchPage({
   search,
   toast,
@@ -1203,8 +1214,8 @@ function PitchPage({
 
       <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
         <StatCard label="Prospects" value={prospects.length} />
-        <StatCard label="Hot" value={prospects.filter((p) => p.stage === 'hot').length} />
-        <StatCard label="Proposals" value={prospects.filter((p) => p.stage === 'proposal').length} />
+        <StatCard label="In Progress" value={prospects.filter((p) => p.stage === 'in-progress').length} />
+        <StatCard label="Won" value={prospects.filter((p) => p.stage === 'won').length} />
         <StatCard label="Potential Value" value={formatINR(prospects.reduce((s, p) => s + (p.value || 0), 0))} />
       </div>
 
@@ -1231,11 +1242,13 @@ function PitchPage({
                   <select
                     value={p.stage}
                     onChange={(ev) => updateStage(p.id, ev.target.value)}
-                    className="rounded-md border border-navy/15 bg-white px-2 py-1.5 font-body text-xs font-semibold text-navy"
+                    className={`rounded-full border px-3 py-1.5 font-body text-xs font-bold ${
+                      PITCH_STAGES.find((s) => s.value === p.stage)?.className || 'bg-navy/10 text-navy border-navy/20'
+                    }`}
                   >
-                    {['to-pitch', 'hot', 'follow-up', 'proposal', 'won', 'lost'].map((s) => (
-                      <option key={s} value={s}>
-                        {s}
+                    {PITCH_STAGES.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
                       </option>
                     ))}
                   </select>
