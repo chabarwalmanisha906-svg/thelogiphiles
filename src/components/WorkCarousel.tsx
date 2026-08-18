@@ -105,9 +105,9 @@ export function WorkCarousel({ items }: { items: WorkItem[] }) {
                     cardRefs.current[i] = el
                   }}
                   onClick={() => !active && goTo(i)}
-                  className={`grid shrink-0 items-stretch overflow-hidden bg-navy transition-[width,opacity,filter] duration-700 ${
+                  className={`grid shrink-0 items-stretch overflow-hidden bg-navy transition-[width,height,opacity,filter] duration-700 ${
                     active
-                      ? 'h-[430px] w-[min(920px,68vw)] grid-cols-[42%_58%] cursor-default opacity-100 saturate-100'
+                      ? 'h-auto w-[min(920px,86vw)] grid-cols-1 grid-rows-[auto_220px] cursor-default opacity-100 saturate-100 sm:h-[430px] sm:w-[min(920px,68vw)] sm:grid-cols-[42%_58%] sm:grid-rows-1'
                       : 'h-[430px] w-[min(420px,32vw)] grid-cols-1 cursor-pointer opacity-70 saturate-[0.7]'
                   }`}
                 >

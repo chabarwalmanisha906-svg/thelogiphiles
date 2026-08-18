@@ -5,7 +5,7 @@ export function FinalStatement() {
     <section className="relative overflow-hidden bg-navy px-6 py-28 md:px-10 md:py-40">
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute -top-6 right-8 select-none font-serif text-[clamp(7rem,40vw,22rem)] font-bold leading-none text-transparent [-webkit-text-stroke:2px_rgba(255,255,255,0.08)] md:right-14"
+        className="pointer-events-none absolute -top-6 -right-4 select-none font-serif text-[clamp(11rem,55vw,22rem)] font-bold leading-none text-transparent [-webkit-text-stroke:2px_rgba(255,255,255,0.08)] md:right-14"
       >
         ;
       </span>
