@@ -1,0 +1,113 @@
+import type { Payload } from 'payload'
+
+const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+const DRIVE_API = 'https://www.googleapis.com/drive/v3/files'
+
+function redirectUri() {
+  const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  return `${base}/api/google/callback`
+}
+
+export function getGoogleAuthUrl(state: string) {
+  const params = new URLSearchParams({
+    client_id: process.env.GOOGLE_CLIENT_ID || '',
+    redirect_uri: redirectUri(),
+    response_type: 'code',
+    access_type: 'offline',
+    prompt: 'consent',
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    state,
+  })
+  return `${GOOGLE_AUTH_URL}?${params.toString()}`
+}
+
+export async function exchangeCodeForTokens(code: string) {
+  const res = await fetch(GOOGLE_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code,
+      client_id: process.env.GOOGLE_CLIENT_ID || '',
+      client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+      redirect_uri: redirectUri(),
+      grant_type: 'authorization_code',
+    }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => null)
+    throw new Error(data?.error_description || 'Failed to exchange Google auth code')
+  }
+  return res.json() as Promise<{ access_token: string; refresh_token?: string; expires_in: number }>
+}
+
+async function getAccessToken(payload: Payload): Promise<string | null> {
+  const settings = await payload.findGlobal({ slug: 'google-integration' })
+  if (!settings?.refreshToken) return null
+
+  const res = await fetch(GOOGLE_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID || '',
+      client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+      refresh_token: settings.refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  })
+  if (!res.ok) return null
+  const data = await res.json()
+  return data.access_token as string
+}
+
+async function createFolder(name: string, parentId: string | null, accessToken: string): Promise<string> {
+  const res = await fetch(DRIVE_API, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name,
+      mimeType: 'application/vnd.google-apps.folder',
+      parents: parentId ? [parentId] : undefined,
+    }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => null)
+    throw new Error(data?.error?.message || `Failed to create Drive folder "${name}"`)
+  }
+  const data = await res.json()
+  return data.id as string
+}
+
+async function ensureWorkspaceRoot(payload: Payload, accessToken: string): Promise<string> {
+  const settings = await payload.findGlobal({ slug: 'google-integration' })
+  if (settings?.workspaceRootFolderId) return settings.workspaceRootFolderId
+
+  const rootId = await createFolder('Workspace', null, accessToken)
+  await payload.updateGlobal({ slug: 'google-integration', data: { workspaceRootFolderId: rootId } })
+  return rootId
+}
+
+// Creates <Workspace>/<Client Name>/Documents and /Projects, returning the three folder IDs.
+// Returns null (rather than throwing) when Drive isn't connected, so callers can treat this
+// as an optional enhancement instead of a hard requirement for creating a client.
+export async function createClientDriveFolders(
+  payload: Payload,
+  clientName: string,
+): Promise<{ folderId: string; documentsFolderId: string; projectsFolderId: string } | null> {
+  const accessToken = await getAccessToken(payload)
+  if (!accessToken) return null
+
+  const rootId = await ensureWorkspaceRoot(payload, accessToken)
+  const folderId = await createFolder(clientName, rootId, accessToken)
+  const [documentsFolderId, projectsFolderId] = await Promise.all([
+    createFolder('Documents', folderId, accessToken),
+    createFolder('Projects', folderId, accessToken),
+  ])
+
+  return { folderId, documentsFolderId, projectsFolderId }
+}
+
+export async function isGoogleDriveConnected(payload: Payload): Promise<boolean> {
+  const settings = await payload.findGlobal({ slug: 'google-integration' })
+  return !!settings?.connected && !!settings?.refreshToken
+}

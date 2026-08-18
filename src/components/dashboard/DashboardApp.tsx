@@ -635,10 +635,32 @@ function ClientsPage({
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [localClients, setLocalClients] = useState<Doc[]>(clients)
+  const [driveStatus, setDriveStatus] = useState<{ connected: boolean; connectedEmail?: string } | null>(null)
 
   useEffect(() => {
     setLocalClients(clients)
   }, [clients])
+
+  useEffect(() => {
+    api('/globals/google-integration')
+      .then((data) => setDriveStatus({ connected: !!data.connected, connectedEmail: data.connectedEmail }))
+      .catch(() => setDriveStatus({ connected: false }))
+
+    const params = new URLSearchParams(window.location.search)
+    const googleStatus = params.get('google')
+    if (googleStatus === 'connected') {
+      toast('Google Drive connected — new clients will now get Workspace folders automatically')
+    } else if (googleStatus === 'no-refresh-token') {
+      toast('Already connected before — revoke access at myaccount.google.com/permissions and reconnect')
+    } else if (googleStatus === 'error') {
+      toast('Google Drive connection failed — please try again')
+    }
+    if (googleStatus) {
+      params.delete('google')
+      window.history.replaceState({}, '', `${window.location.pathname}${params.toString() ? `?${params}` : ''}`)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const filtered = localClients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
 
@@ -690,6 +712,25 @@ function ClientsPage({
         }
       />
 
+      {driveStatus && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-navy/10 bg-white p-5">
+          <div>
+            <p className="font-heading text-sm font-extrabold text-navy">Google Drive Workspace Sync</p>
+            <p className="mt-1 font-body text-xs text-navy/50">
+              {driveStatus.connected
+                ? `Connected as ${driveStatus.connectedEmail}. New clients automatically get a Workspace folder with Documents and Projects sub-folders.`
+                : 'Not connected. Connect Google Drive so every new client automatically gets a matching folder structure.'}
+            </p>
+          </div>
+          <a
+            href="/api/google/connect"
+            className="shrink-0 rounded-md bg-mint px-4 py-2.5 font-heading text-[11px] font-bold uppercase text-white hover:bg-navy"
+          >
+            {driveStatus.connected ? 'Reconnect' : 'Connect Google Drive'}
+          </a>
+        </div>
+      )}
+
       <div className="mb-6 grid grid-cols-2 gap-5 md:grid-cols-4">
         <StatCard label="Total" value={localClients.length} />
         <StatCard label="Active" value={localClients.filter((c) => c.status === 'active').length} />
@@ -701,7 +742,7 @@ function ClientsPage({
         <table className="w-full min-w-[700px]">
           <thead>
             <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
-              {['Client', 'Industry', 'Onboarded', 'Value', 'Status'].map((h) => (
+              {['Client', 'Industry', 'Onboarded', 'Value', 'Status', 'Workspace'].map((h) => (
                 <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
                   {h}
                 </th>
@@ -726,11 +767,25 @@ function ClientsPage({
                     <option value="at-risk">At Risk</option>
                   </select>
                 </td>
+                <td className="px-4 py-3.5">
+                  {c.driveFolderId ? (
+                    <a
+                      href={`https://drive.google.com/drive/folders/${c.driveFolderId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-md border border-navy/15 px-3 py-1.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
+                    >
+                      Open Folder
+                    </a>
+                  ) : (
+                    <span className="font-body text-xs text-navy/30">—</span>
+                  )}
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                <td colSpan={6} className="px-4 py-8 text-center font-body text-sm text-navy/40">
                   No clients yet.
                 </td>
               </tr>

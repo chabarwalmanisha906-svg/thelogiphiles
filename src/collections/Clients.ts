@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { createClientDriveFolders } from '../lib/googleDrive'
 
 export const Clients: CollectionConfig = {
   slug: 'clients',
@@ -14,6 +15,29 @@ export const Clients: CollectionConfig = {
     create: ({ req }) => req.user?.collection === 'users',
     update: ({ req }) => req.user?.collection === 'users',
     delete: ({ req }) => req.user?.collection === 'users',
+  },
+  hooks: {
+    afterChange: [
+      async ({ doc, operation, req }) => {
+        if (operation !== 'create' || doc.driveFolderId) return
+        try {
+          const folders = await createClientDriveFolders(req.payload, doc.name)
+          if (!folders) return // Drive not connected — skip silently, this is a best-effort enhancement
+          await req.payload.update({
+            collection: 'clients',
+            id: doc.id,
+            data: {
+              driveFolderId: folders.folderId,
+              driveDocumentsFolderId: folders.documentsFolderId,
+              driveProjectsFolderId: folders.projectsFolderId,
+            },
+            req,
+          })
+        } catch (err) {
+          console.error(`Failed to create Drive folders for client "${doc.name}":`, err)
+        }
+      },
+    ],
   },
   fields: [
     { name: 'name', type: 'text', required: true },
@@ -34,5 +58,12 @@ export const Clients: CollectionConfig = {
     { name: 'onboardedDate', type: 'date' },
     { name: 'visible', type: 'checkbox', defaultValue: true, admin: { position: 'sidebar' } },
     { name: 'order', type: 'number', defaultValue: 0, admin: { position: 'sidebar' } },
+    {
+      name: 'driveFolderId',
+      type: 'text',
+      admin: { position: 'sidebar', readOnly: true, description: 'Google Drive client folder ID.' },
+    },
+    { name: 'driveDocumentsFolderId', type: 'text', admin: { position: 'sidebar', readOnly: true } },
+    { name: 'driveProjectsFolderId', type: 'text', admin: { position: 'sidebar', readOnly: true } },
   ],
 }

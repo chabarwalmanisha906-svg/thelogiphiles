@@ -26,6 +26,7 @@ import { Messages } from './collections/Messages'
 import { ChatAttachments } from './collections/ChatAttachments'
 import { Meetings } from './collections/Meetings'
 import { SiteSettings } from './globals/SiteSettings'
+import { GoogleIntegration } from './globals/GoogleIntegration'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -64,7 +65,7 @@ export default buildConfig({
     ChatAttachments,
     Meetings,
   ],
-  globals: [SiteSettings],
+  globals: [SiteSettings, GoogleIntegration],
   routes: {
     admin: '/cms',
   },
