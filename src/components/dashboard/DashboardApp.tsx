@@ -1955,6 +1955,7 @@ function EmployeeProfileModal({
         role: form.get('role'),
         department: form.get('department'),
         phone: form.get('phone'),
+        joiningDate: form.get('joiningDate') || undefined,
         active: form.get('active') === 'on',
       }
       if (photoFile && photoFile.size > 0) {
@@ -2084,9 +2085,19 @@ function EmployeeProfileModal({
             </Field>
           </div>
 
-          <Field label="Phone">
-            <input name="phone" defaultValue={employee.phone} className={inputClass} />
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Phone">
+              <input name="phone" defaultValue={employee.phone} className={inputClass} />
+            </Field>
+            <Field label="Joining Date">
+              <input
+                type="date"
+                name="joiningDate"
+                defaultValue={employee.joiningDate ? employee.joiningDate.slice(0, 10) : ''}
+                className={inputClass}
+              />
+            </Field>
+          </div>
 
           <label className="flex items-center gap-2 font-body text-sm font-semibold text-navy">
             <input type="checkbox" name="active" defaultChecked={employee.active} className="h-4 w-4" />
