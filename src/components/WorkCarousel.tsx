@@ -24,21 +24,30 @@ export function WorkCarousel({ items }: { items: WorkItem[] }) {
   }
 
   useLayoutEffect(() => {
-    const wrapper = wrapperRef.current
-    const track = trackRef.current
-    const card = cardRefs.current[index]
-    if (!wrapper || !track || !card) return
+    const recalculate = () => {
+      const wrapper = wrapperRef.current
+      const track = trackRef.current
+      const card = cardRefs.current[index]
+      if (!wrapper || !track || !card) return
 
-    const wrapperWidth = wrapper.offsetWidth
-    const cardCenter = card.offsetLeft + card.offsetWidth / 2
-    let next = wrapperWidth / 2 - cardCenter
+      const wrapperWidth = wrapper.offsetWidth
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2
+      let next = wrapperWidth / 2 - cardCenter
 
-    const totalWidth = track.scrollWidth
-    const maxTranslate = 0
-    const minTranslate = wrapperWidth - totalWidth
-    next = Math.min(maxTranslate, Math.max(minTranslate, next))
+      const totalWidth = track.scrollWidth
+      const maxTranslate = 0
+      const minTranslate = wrapperWidth - totalWidth
+      next = Math.min(maxTranslate, Math.max(minTranslate, next))
 
-    setTranslateX(next)
+      setTranslateX(next)
+    }
+
+    // Cards animate width/height over 700ms when becoming active, so the
+    // immediate measurement below can catch them mid-transition and center
+    // on a stale size. Recalculate once more once that transition settles.
+    recalculate()
+    const timeout = setTimeout(recalculate, 720)
+    return () => clearTimeout(timeout)
   }, [index, items.length])
 
   useEffect(() => {

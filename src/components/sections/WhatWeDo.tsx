@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ScrollReveal } from '@/components/ScrollReveal'
 import { GhostHeading } from '@/components/GhostHeading'
@@ -313,13 +314,13 @@ export function WhatWeDo() {
                   </span>
                 </div>
 
-                <a
-                  href="#contact"
+                <Link
+                  href="/#contact"
                   onClick={() => setOpenIndex(null)}
                   className="inline-block whitespace-nowrap rounded-full bg-mint px-6 py-3.5 font-heading text-[11px] font-bold text-navy transition-colors duration-300 hover:bg-navy hover:text-white"
                 >
                   LET&apos;S WRITE IT →
-                </a>
+                </Link>
               </div>
             </div>
           </motion.aside>
