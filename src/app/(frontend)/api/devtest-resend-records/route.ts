@@ -12,10 +12,16 @@ export async function GET() {
   const domain = data.data?.find((d: any) => d.name === 'thelogiphiles.com')
   if (!domain) return NextResponse.json({ error: 'domain not found in resend' })
 
+  const verifyRes = await fetch(`https://api.resend.com/domains/${domain.id}/verify`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${key}` },
+  })
+  const verifyData = await verifyRes.json()
+
   const detailRes = await fetch(`https://api.resend.com/domains/${domain.id}`, {
     headers: { Authorization: `Bearer ${key}` },
   })
   const detail = await detailRes.json()
 
-  return NextResponse.json(detail)
+  return NextResponse.json({ verifyResult: verifyData, detail })
 }
