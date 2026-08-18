@@ -335,7 +335,7 @@ function Shell() {
           {page === 'clients' && (
             <ClientsPage clients={clients} search={search} toast={toast} refresh={refreshClients} />
           )}
-          {page === 'client360' && <Client360Page clients={clients} />}
+          {page === 'client360' && <Client360Page clients={clients} toast={toast} refresh={refreshClients} />}
           {page === 'enquiries' && <EnquiriesPage search={search} toast={toast} />}
           {page === 'pitch' && <PitchPage search={search} toast={toast} refreshClients={refreshClients} />}
           {page === 'sales' && <SalesPage />}
@@ -792,11 +792,16 @@ function ClientsPage({
                   <select
                     value={c.status || 'active'}
                     onChange={(ev) => updateStatus(c.id, ev.target.value)}
-                    className="rounded-md border border-navy/15 bg-white px-2 py-1.5 font-body text-xs font-semibold text-navy"
+                    className={`rounded-full border px-3 py-1.5 font-body text-xs font-bold ${
+                      CLIENT_STATUS_OPTIONS.find((s) => s.value === c.status)?.className ||
+                      'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}
                   >
-                    <option value="active">Active</option>
-                    <option value="onboarding">Onboarding</option>
-                    <option value="at-risk">At Risk</option>
+                    {CLIENT_STATUS_OPTIONS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
                   </select>
                 </td>
                 <td className="px-4 py-3.5">
@@ -855,10 +860,25 @@ function ClientsPage({
 
 /* ============================== CLIENT 360 ============================== */
 
-function Client360Page({ clients }: { clients: Doc[] }) {
+const CLIENT_STATUS_OPTIONS = [
+  { value: 'active', label: 'Active', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { value: 'onboarding', label: 'Onboarding', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { value: 'at-risk', label: 'At Risk', className: 'bg-red-50 text-red-700 border-red-200' },
+]
+
+function Client360Page({
+  clients,
+  toast,
+  refresh,
+}: {
+  clients: Doc[]
+  toast: (m: string) => void
+  refresh: () => Promise<void>
+}) {
   const [selected, setSelected] = useState<string>('')
   const [tasks, setTasks] = useState<Doc[]>([])
   const [invoices, setInvoices] = useState<Doc[]>([])
+  const [statusSaving, setStatusSaving] = useState(false)
 
   useEffect(() => {
     if (clients.length && !selected) setSelected(String(clients[0].id))
@@ -877,6 +897,21 @@ function Client360Page({ clients }: { clients: Doc[] }) {
   }, [selected])
 
   const client = clients.find((c) => String(c.id) === selected)
+
+  async function handleStatusChange(newStatus: string) {
+    if (!client) return
+    setStatusSaving(true)
+    try {
+      await api(`/clients/${client.id}`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) })
+      toast('Client status updated')
+      await refresh()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update status')
+    } finally {
+      setStatusSaving(false)
+    }
+  }
+
   const progressMap: Record<string, number> = { todo: 10, 'in-progress': 55, review: 80, completed: 100 }
   const outstanding = invoices.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.amount, 0)
   const timeline = [
@@ -906,7 +941,24 @@ function Client360Page({ clients }: { clients: Doc[] }) {
             <StatCard label="Client Value" value={formatINR(client.value)} />
             <StatCard label="Tasks" value={tasks.length} trend={`${tasks.filter((t) => t.status === 'completed').length} completed`} />
             <StatCard label="Outstanding" value={formatINR(outstanding)} />
-            <StatCard label="Client Health" value={client.status || 'active'} />
+            <div className="rounded-lg border border-navy/10 bg-white p-5">
+              <p className="mb-2 font-body text-[11px] font-bold uppercase tracking-wide text-navy/40">Client Health</p>
+              <select
+                value={client.status || 'active'}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={statusSaving}
+                className={`w-full rounded-full border px-3 py-1.5 font-body text-xs font-bold disabled:opacity-60 ${
+                  CLIENT_STATUS_OPTIONS.find((s) => s.value === client.status)?.className ||
+                  'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}
+              >
+                {CLIENT_STATUS_OPTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -937,9 +989,16 @@ function Client360Page({ clients }: { clients: Doc[] }) {
                   <span className="text-navy/50">Onboarded</span>
                   <b>{formatDate(client.onboardedDate)}</b>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex items-center justify-between">
                   <span className="text-navy/50">Status</span>
-                  <b className="capitalize">{client.status}</b>
+                  <span
+                    className={`rounded-full border px-3 py-1 font-heading text-[11px] font-bold ${
+                      CLIENT_STATUS_OPTIONS.find((s) => s.value === client.status)?.className ||
+                      'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}
+                  >
+                    {CLIENT_STATUS_OPTIONS.find((s) => s.value === client.status)?.label || client.status}
+                  </span>
                 </div>
               </div>
             </Card>
