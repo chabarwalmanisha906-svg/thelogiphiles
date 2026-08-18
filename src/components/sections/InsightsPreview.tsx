@@ -9,7 +9,7 @@ export function InsightsPreview({ items }: { items: PostItem[] }) {
 
   return (
     <section className="relative overflow-hidden bg-offwhite px-6 py-28 md:px-10 md:py-36">
-      <GhostHeading className="absolute -top-4 right-6 md:right-10">INSIGHTS</GhostHeading>
+      <GhostHeading className="absolute -top-4 right-6 hidden md:right-10 lg:block">INSIGHTS</GhostHeading>
 
       <div className="relative mx-auto max-w-[1600px]">
         <ScrollReveal className="mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">

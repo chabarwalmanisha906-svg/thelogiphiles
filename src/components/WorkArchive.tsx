@@ -77,7 +77,7 @@ export function WorkArchive({ items }: { items: WorkItem[] }) {
                   />
                 )}
 
-                <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-navy/85 via-navy/0 to-navy/0 p-7 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-navy/85 via-navy/0 to-navy/0 p-7 opacity-100 transition-opacity duration-500 lg:opacity-0 lg:group-hover:opacity-100">
                   <span className="font-heading text-2xl font-extrabold text-white">
                     {item.title}
                   </span>

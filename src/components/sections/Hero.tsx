@@ -88,7 +88,7 @@ export function Hero({ settings }: { settings: SiteSettings }) {
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="relative hidden aspect-square items-center justify-center lg:col-span-6 lg:flex"
+          className="relative flex aspect-square max-w-sm items-center justify-center lg:col-span-6 lg:max-w-none"
         >
           <Image
             src="/hero-visual.png"
@@ -96,7 +96,7 @@ export function Hero({ settings }: { settings: SiteSettings }) {
             fill
             priority
             unoptimized
-            sizes="(min-width: 1024px) 46vw, 0px"
+            sizes="(min-width: 1024px) 46vw, 90vw"
             className="object-contain"
           />
           <span

@@ -185,7 +185,7 @@ export function WhatWeDo() {
       id="what-we-do"
       className="relative scroll-mt-24 overflow-hidden bg-offwhite px-6 py-28 md:px-10 md:py-36"
     >
-      <GhostHeading className="absolute -top-4 right-6 md:right-10">DO</GhostHeading>
+      <GhostHeading className="absolute -top-4 right-6 hidden md:right-10 lg:block">DO</GhostHeading>
 
       <div className="relative mx-auto max-w-[1600px]">
         <ScrollReveal>
