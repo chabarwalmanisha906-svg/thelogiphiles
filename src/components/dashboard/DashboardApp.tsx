@@ -1675,14 +1675,26 @@ function TeamPage({
         password,
         department: form.get('department'),
         role: form.get('role'),
+        phone: form.get('phone') || undefined,
+        joiningDate: form.get('joiningDate') || undefined,
       }
       if (photoFile && photoFile.size > 0) {
         payload.photo = Number(await uploadMedia(photoFile, name))
       }
-      await api('/employees', {
+      const created = await api('/employees', {
         method: 'POST',
         body: JSON.stringify(payload),
       })
+
+      const docFile = form.get('document') as File | null
+      if (docFile && docFile.size > 0) {
+        const compressed = await compressImage(docFile)
+        const docForm = new FormData()
+        docForm.append('file', compressed)
+        docForm.append('_payload', JSON.stringify({ label: docFile.name, folder: 'documents', employee: Number(created.doc.id) }))
+        await fetch('/api/employee-files', { method: 'POST', credentials: 'include', body: docForm })
+      }
+
       toast('Team member added')
       setOpen(false)
       setPasswordField('')
@@ -1805,12 +1817,22 @@ function TeamPage({
           <Field label="Email">
             <input name="email" type="email" required className={inputClass} />
           </Field>
-          <Field label="Department">
-            <input name="department" className={inputClass} />
-          </Field>
-          <Field label="Role / Designation">
-            <input name="role" required className={inputClass} />
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Department">
+              <input name="department" className={inputClass} />
+            </Field>
+            <Field label="Role / Designation">
+              <input name="role" required className={inputClass} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Phone">
+              <input name="phone" className={inputClass} />
+            </Field>
+            <Field label="Joining Date">
+              <input type="date" name="joiningDate" className={inputClass} />
+            </Field>
+          </div>
           <Field label="Login Password">
             <div className="flex gap-2">
               <input
@@ -1833,6 +1855,9 @@ function TeamPage({
             Set this employee&apos;s password now, or leave it blank and one will be generated for you — either
             way you&apos;ll see it again right after saving so you can share it with them.
           </p>
+          <Field label="Document (optional)">
+            <input type="file" name="document" className="font-body text-sm text-navy/70" />
+          </Field>
           <button disabled={saving} className="mt-2 rounded-md bg-mint py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy disabled:opacity-60">
             {saving ? 'Creating…' : 'Create Member'}
           </button>
@@ -1934,6 +1959,10 @@ function EmployeeProfileModal({
   const [docLabel, setDocLabel] = useState('')
   const [docFolder, setDocFolder] = useState('documents')
   const [meetingOpen, setMeetingOpen] = useState(false)
+  const [resettingPassword, setResettingPassword] = useState(false)
+  const [newPasswordField, setNewPasswordField] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [revealedPassword, setRevealedPassword] = useState('')
 
   const loadFiles = useCallback(async () => {
     const data = await api(`/employee-files?where[employee][equals]=${employee.id}&limit=200&sort=-createdAt`)
@@ -2027,6 +2056,26 @@ function EmployeeProfileModal({
     toast('Copied to clipboard')
   }
 
+  function randomPassword() {
+    return Math.random().toString(36).slice(-6) + Math.floor(Math.random() * 90 + 10)
+  }
+
+  async function handlePasswordReset() {
+    const newPassword = newPasswordField.trim() || randomPassword()
+    setPasswordSaving(true)
+    try {
+      await api(`/employees/${employee.id}`, { method: 'PATCH', body: JSON.stringify({ password: newPassword }) })
+      setRevealedPassword(newPassword)
+      setNewPasswordField('')
+      setResettingPassword(false)
+      toast('Password reset')
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to reset password')
+    } finally {
+      setPasswordSaving(false)
+    }
+  }
+
   return (
     <Modal open onClose={onClose} title="Employee Profile">
       <div className="grid gap-6">
@@ -2043,22 +2092,94 @@ function EmployeeProfileModal({
             Schedule Meeting with {employee.name?.split(' ')[0]}
           </button>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Employee ID">
-              <input value={employee.employeeId || '—'} disabled className={`${inputClass} bg-offwhite/60 text-navy/50`} />
-            </Field>
-            <Field label="Login Email">
-              <div className="flex gap-2">
-                <input value={employee.email || ''} disabled className={`${inputClass} bg-offwhite/60 text-navy/50`} />
-                <button
-                  type="button"
-                  onClick={() => copy(employee.email || '')}
-                  className="shrink-0 rounded-md border border-navy/15 px-3 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
-                >
-                  Copy
-                </button>
-              </div>
-            </Field>
+          <div className="rounded-lg border border-navy/10 bg-offwhite/40 p-4">
+            <h4 className="mb-3 font-heading text-xs font-extrabold uppercase tracking-wide text-navy/60">
+              Login Credentials
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Employee ID">
+                <input value={employee.employeeId || '—'} disabled className={`${inputClass} bg-white text-navy/50`} />
+              </Field>
+              <Field label="Login Email">
+                <div className="flex gap-2">
+                  <input value={employee.email || ''} disabled className={`${inputClass} bg-white text-navy/50`} />
+                  <button
+                    type="button"
+                    onClick={() => copy(employee.email || '')}
+                    className="shrink-0 rounded-md border border-navy/15 px-3 font-heading text-[10px] font-bold uppercase text-navy hover:bg-navy/5"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </Field>
+            </div>
+
+            <div className="mt-4">
+              <span className="mb-1.5 block font-body text-[11px] font-bold uppercase tracking-wide text-navy/40">
+                Password
+              </span>
+
+              {revealedPassword ? (
+                <div className="rounded-md border border-mint/30 bg-mint/5 p-3">
+                  <p className="mb-2 font-body text-[11px] text-navy/60">
+                    New password — share it now, it won&apos;t be shown again after you close this profile.
+                  </p>
+                  <div className="flex gap-2">
+                    <input value={revealedPassword} disabled className={`${inputClass} bg-white font-mono text-navy`} />
+                    <button
+                      type="button"
+                      onClick={() => copy(revealedPassword)}
+                      className="shrink-0 rounded-md border border-navy/15 px-3 font-heading text-[10px] font-bold uppercase text-navy hover:bg-white"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              ) : resettingPassword ? (
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={newPasswordField}
+                    onChange={(e) => setNewPasswordField(e.target.value)}
+                    placeholder="Leave blank to auto-generate"
+                    autoComplete="new-password"
+                    className={inputClass}
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePasswordReset}
+                    disabled={passwordSaving}
+                    className="shrink-0 rounded-md bg-mint px-4 font-heading text-[10px] font-bold uppercase text-white hover:bg-navy disabled:opacity-60"
+                  >
+                    {passwordSaving ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResettingPassword(false)
+                      setNewPasswordField('')
+                    }}
+                    className="shrink-0 rounded-md border border-navy/15 px-3 font-heading text-[10px] font-bold uppercase text-navy hover:bg-white"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <input value="••••••••••••" disabled className={`${inputClass} bg-white tracking-widest text-navy/40`} />
+                  <button
+                    type="button"
+                    onClick={() => setResettingPassword(true)}
+                    className="shrink-0 rounded-md border border-navy/15 px-3 py-2.5 font-heading text-[10px] font-bold uppercase text-navy hover:bg-white"
+                  >
+                    Reset Password
+                  </button>
+                </div>
+              )}
+              <p className="mt-1.5 font-body text-[10px] text-navy/40">
+                Passwords are encrypted and can never be viewed, by admins or anyone else — only reset to a new one.
+              </p>
+            </div>
           </div>
 
           {employee.driveFolderId && (
