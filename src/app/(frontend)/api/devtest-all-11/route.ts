@@ -160,10 +160,11 @@ export async function GET(request: Request) {
     const resumeDoc = await payload.create({
       collection: 'employee-files',
       data: { label: 'Test11 Resume.png', folder: 'resume', employee: emp1.id },
-      file: { data: pngBuffer, mimetype: 'image/png', name: 'resume.png', size: pngBuffer.length },
+      file: { data: pngBuffer, mimetype: 'image/png', name: `resume-${Date.now()}.png`, size: pngBuffer.length },
     })
     cleanup.push({ collection: 'employee-files', id: resumeDoc.id })
     const unauthCheck = await fetch(`${base}${resumeDoc.url}`)
+    const unauthHeaders = Object.fromEntries(unauthCheck.headers.entries())
     const emp1LoginRes = await fetch(`${base}/api/employees/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -174,14 +175,36 @@ export async function GET(request: Request) {
     const authedCheck = emp1Cookie
       ? await fetch(`${base}${resumeDoc.url}`, { headers: { Cookie: emp1Cookie } })
       : null
+    const authedHeaders = authedCheck ? Object.fromEntries(authedCheck.headers.entries()) : {}
+    // Re-check unauthenticated AFTER an authenticated fetch succeeded, to see whether
+    // Vercel's edge CDN cached that "public, max-age=..." response and now serves it
+    // to anyone with the URL, bypassing Payload's access control entirely.
+    const unauthRecheck = await fetch(`${base}${resumeDoc.url}`)
+    const unauthRecheckHeaders = Object.fromEntries(unauthRecheck.headers.entries())
     results.test11_ResumeAccessible = {
       url: resumeDoc.url,
       unauthStatus: unauthCheck.status,
+      unauthCacheHeaders: {
+        cacheControl: unauthHeaders['cache-control'],
+        xVercelCache: unauthHeaders['x-vercel-cache'],
+        age: unauthHeaders['age'],
+      },
       loginGotCookie: !!emp1Cookie,
       loginGotToken: !!emp1LoginBody?.token,
       authedStatus: authedCheck?.status ?? 'no-cookie',
+      authedCacheHeaders: {
+        cacheControl: authedHeaders['cache-control'],
+        xVercelCache: authedHeaders['x-vercel-cache'],
+      },
+      unauthRecheckStatus: unauthRecheck.status,
+      unauthRecheckCacheHeaders: {
+        cacheControl: unauthRecheckHeaders['cache-control'],
+        xVercelCache: unauthRecheckHeaders['x-vercel-cache'],
+        age: unauthRecheckHeaders['age'],
+      },
       correctlyBlockedWhenUnauthenticated: unauthCheck.status === 401 || unauthCheck.status === 403,
       accessibleToOwningEmployee: authedCheck?.status === 200,
+      leakedViaEdgeCacheAfterAuthedFetch: unauthRecheck.status === 200,
     }
 
     return NextResponse.json(results)
