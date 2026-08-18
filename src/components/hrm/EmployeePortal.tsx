@@ -560,7 +560,7 @@ function FilesView({ employeeId, toast }: { employeeId: string; toast: (m: strin
                 <Icon size={22} className="text-navy/40" />
                 <div>
                   <b className="block font-body text-[13px] text-navy">{f.label || f.filename}</b>
-                  <small className="font-body text-[11px] text-navy/40">
+                  <small className="font-body text-[11px] font-medium text-navy/70">
                     {f.mimeType} · {f.filesize ? `${(f.filesize / 1024 / 1024).toFixed(1)} MB` : ''} ·{' '}
                     {f.createdAt ? new Date(f.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}{' '}
                     · Uploaded by {canDelete ? 'You' : relLabel(f.uploadedBy?.value)}
