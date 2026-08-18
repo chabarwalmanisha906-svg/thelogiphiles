@@ -25,6 +25,7 @@ import { Conversations } from './collections/Conversations'
 import { Messages } from './collections/Messages'
 import { ChatAttachments } from './collections/ChatAttachments'
 import { Meetings } from './collections/Meetings'
+import { LoginLogs } from './collections/LoginLogs'
 import { SiteSettings } from './globals/SiteSettings'
 import { GoogleIntegration } from './globals/GoogleIntegration'
 
@@ -64,6 +65,7 @@ export default buildConfig({
     Messages,
     ChatAttachments,
     Meetings,
+    LoginLogs,
   ],
   globals: [SiteSettings, GoogleIntegration],
   routes: {

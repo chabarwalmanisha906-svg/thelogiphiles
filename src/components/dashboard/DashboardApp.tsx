@@ -2102,11 +2102,11 @@ function EmployeeProfileModal({
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <Field label="Employee ID">
-                <input value={employee.employeeId || '—'} disabled className={`${inputClass} bg-white text-navy/50`} />
+                <input value={employee.employeeId || '—'} disabled className={`${inputClass} bg-white font-semibold text-navy`} />
               </Field>
               <Field label="Login Email">
                 <div className="flex gap-2">
-                  <input value={employee.email || ''} disabled className={`${inputClass} bg-white text-navy/50`} />
+                  <input value={employee.email || ''} disabled className={`${inputClass} bg-white font-semibold text-navy`} />
                   <button
                     type="button"
                     onClick={() => copy(employee.email || '')}
@@ -2170,7 +2170,7 @@ function EmployeeProfileModal({
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-2">
-                  <input value="••••••••••••" disabled className={`${inputClass} bg-white tracking-widest text-navy/40`} />
+                  <input value="••••••••••••" disabled className={`${inputClass} bg-white tracking-widest text-navy/70`} />
                   <button
                     type="button"
                     onClick={() => setResettingPassword(true)}
