@@ -19,6 +19,10 @@ export const PitchProspects: CollectionConfig = {
         const justWon = doc.stage === 'won' && (operation === 'create' || previousDoc?.stage !== 'won')
         if (!justWon) return
 
+        const conversionNote = `[${new Date().toLocaleDateString('en-IN')}] Converted from Pitch CRM (Won).${
+          doc.notes ? ` Notes: ${doc.notes}` : ''
+        }`
+
         const existing = await req.payload.find({
           collection: 'clients',
           where: { name: { equals: doc.company } },
@@ -34,6 +38,15 @@ export const PitchProspects: CollectionConfig = {
             data: {
               value: (client.value || 0) + (doc.value || 0),
               status: client.status === 'at-risk' ? client.status : 'active',
+              // Fill in only what's missing so we never overwrite anything an
+              // admin has since edited directly on the client record.
+              contactPerson: client.contactPerson || doc.decisionMaker || undefined,
+              contactEmail: client.contactEmail || doc.email || undefined,
+              pitchDetails: client.pitchDetails || doc.need || undefined,
+              owner: client.owner || doc.owner || undefined,
+              communicationHistory: client.communicationHistory
+                ? `${client.communicationHistory}\n${conversionNote}`
+                : conversionNote,
             },
             req,
           })
@@ -46,6 +59,10 @@ export const PitchProspects: CollectionConfig = {
               status: 'active',
               onboardedDate: new Date().toISOString(),
               owner: doc.owner || undefined,
+              contactPerson: doc.decisionMaker || undefined,
+              contactEmail: doc.email || undefined,
+              pitchDetails: doc.need || undefined,
+              communicationHistory: conversionNote,
               visible: false,
             },
             req,

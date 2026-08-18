@@ -986,6 +986,18 @@ function Client360Page({
                   <b>{client.industry || '—'}</b>
                 </div>
                 <div className="flex justify-between border-b border-navy/10 pb-2.5">
+                  <span className="text-navy/50">Contact Person</span>
+                  <b>{client.contactPerson || '—'}</b>
+                </div>
+                <div className="flex justify-between border-b border-navy/10 pb-2.5">
+                  <span className="text-navy/50">Contact Email</span>
+                  <b>{client.contactEmail || '—'}</b>
+                </div>
+                <div className="flex justify-between border-b border-navy/10 pb-2.5">
+                  <span className="text-navy/50">Assigned Team Member</span>
+                  <b>{relLabel(client.owner)}</b>
+                </div>
+                <div className="flex justify-between border-b border-navy/10 pb-2.5">
                   <span className="text-navy/50">Onboarded</span>
                   <b>{formatDate(client.onboardedDate)}</b>
                 </div>
@@ -1003,6 +1015,21 @@ function Client360Page({
               </div>
             </Card>
           </div>
+
+          {(client.pitchDetails || client.communicationHistory) && (
+            <div className="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+              {client.pitchDetails && (
+                <Card title="Pitch Details">
+                  <p className="whitespace-pre-wrap font-body text-sm leading-relaxed text-navy/70">{client.pitchDetails}</p>
+                </Card>
+              )}
+              {client.communicationHistory && (
+                <Card title="Communication History">
+                  <p className="whitespace-pre-wrap font-body text-sm leading-relaxed text-navy/70">{client.communicationHistory}</p>
+                </Card>
+              )}
+            </div>
+          )}
 
           <Card title="Client Timeline">
             <div className="grid gap-2.5">
