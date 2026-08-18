@@ -26,7 +26,7 @@ function MarqueeRow({ logos, direction }: { logos: LogoEntry[]; direction: 'left
         {doubled.map((logo, i) => (
           <div
             key={`${logo.key}-${i}`}
-            className="flex aspect-[3/2] w-[260px] shrink-0 items-center justify-center border-r border-navy/10 p-3 grayscale transition-all duration-300 hover:grayscale-0 sm:w-[340px]"
+            className="flex aspect-[3/2] w-[260px] shrink-0 items-center justify-center border-r border-navy/10 p-3 transition-all duration-300 sm:w-[340px] lg:grayscale lg:hover:grayscale-0"
           >
             {logo.src && (
               <Image
