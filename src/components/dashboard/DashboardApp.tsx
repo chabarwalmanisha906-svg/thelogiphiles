@@ -1932,6 +1932,10 @@ function TeamPage({
 /* ============================== EMPLOYEE PROFILE ============================== */
 
 const DOC_FOLDERS = [
+  { value: 'resume', label: 'Resume' },
+  { value: 'id-proof', label: 'ID Proof' },
+  { value: 'joining-documents', label: 'Joining Documents' },
+  { value: 'certificates', label: 'Certificates' },
   { value: 'documents', label: 'Documents' },
   { value: 'brand-logos', label: 'Brand Logos' },
   { value: 'canva-templates', label: 'Canva Templates' },

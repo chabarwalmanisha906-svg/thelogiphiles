@@ -51,10 +51,15 @@ const NAV = [
 ]
 
 const FOLDERS = [
+  { value: 'resume', label: 'Resume' },
+  { value: 'id-proof', label: 'ID Proof' },
+  { value: 'joining-documents', label: 'Joining Documents' },
+  { value: 'certificates', label: 'Certificates' },
   { value: 'brand-logos', label: 'Brand Logos' },
   { value: 'canva-templates', label: 'Canva Templates' },
   { value: 'video-assets', label: 'Video Assets' },
   { value: 'documents', label: 'Documents' },
+  { value: 'other', label: 'Other' },
 ]
 
 function todayStr() {
@@ -515,7 +520,7 @@ function FilesView({ employeeId, toast }: { employeeId: string; toast: (m: strin
       </div>
 
       <h3 className="mb-3 font-heading text-sm font-extrabold text-navy">Quick Folders</h3>
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {FOLDERS.map((f) => (
           <button
             key={f.value}

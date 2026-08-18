@@ -46,6 +46,10 @@ export const EmployeeFiles: CollectionConfig = {
       type: 'select',
       defaultValue: 'other',
       options: [
+        { label: 'Resume', value: 'resume' },
+        { label: 'ID Proof', value: 'id-proof' },
+        { label: 'Joining Documents', value: 'joining-documents' },
+        { label: 'Certificates', value: 'certificates' },
         { label: 'Brand Logos', value: 'brand-logos' },
         { label: 'Canva Templates', value: 'canva-templates' },
         { label: 'Video Assets', value: 'video-assets' },
