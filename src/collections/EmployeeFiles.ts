@@ -8,28 +8,43 @@ export const EmployeeFiles: CollectionConfig = {
   },
   defaultSort: '-createdAt',
   access: {
+    // Any employee can VIEW/download all of their own files, including ones an
+    // admin uploaded on their behalf (ID proof, joining letters, etc.) — but
+    // update/delete is restricted below to whoever actually uploaded the file,
+    // so an employee can't remove HR documents they didn't put there.
     read: ({ req }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
       return { employee: { equals: req.user.id } }
     },
     create: ({ req }) => !!req.user,
-    update: ({ req }) => {
+    update: async ({ req, id }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
-      return { employee: { equals: req.user.id } }
+      if (!id) return false
+      const doc = await req.payload.findByID({ collection: 'employee-files', id: id as string, depth: 0 })
+      return (
+        doc?.uploadedBy?.relationTo === req.user.collection && String(doc.uploadedBy.value) === String(req.user.id)
+      )
     },
-    delete: ({ req }) => {
+    delete: async ({ req, id }) => {
       if (!req.user) return false
       if (req.user.collection === 'users') return true
-      return { employee: { equals: req.user.id } }
+      if (!id) return false
+      const doc = await req.payload.findByID({ collection: 'employee-files', id: id as string, depth: 0 })
+      return (
+        doc?.uploadedBy?.relationTo === req.user.collection && String(doc.uploadedBy.value) === String(req.user.id)
+      )
     },
   },
   hooks: {
     beforeChange: [
-      ({ req, data }) => {
+      ({ req, data, operation }) => {
         if (req.user && req.user.collection !== 'users') {
           data.employee = req.user.id
+        }
+        if (operation === 'create' && req.user) {
+          data.uploadedBy = { relationTo: req.user.collection, value: req.user.id }
         }
         return data
       },
@@ -41,6 +56,12 @@ export const EmployeeFiles: CollectionConfig = {
   fields: [
     { name: 'label', type: 'text', required: true },
     { name: 'employee', type: 'relationship', relationTo: 'employees', required: true },
+    {
+      name: 'uploadedBy',
+      type: 'relationship',
+      relationTo: ['users', 'employees'],
+      admin: { readOnly: true, description: 'Who actually uploaded this file — set automatically.' },
+    },
     {
       name: 'folder',
       type: 'select',

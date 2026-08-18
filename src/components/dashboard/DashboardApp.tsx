@@ -2274,7 +2274,10 @@ function EmployeeProfileModal({
               <div key={f.id} className="flex items-center justify-between border-b border-navy/10 px-4 py-3 last:border-0">
                 <div className="min-w-0">
                   <span className="block truncate font-body text-[13px] font-semibold text-navy">{f.label || f.filename}</span>
-                  <span className="font-body text-[11px] text-navy/40">{DOC_FOLDERS.find((d) => d.value === f.folder)?.label || f.folder}</span>
+                  <span className="font-body text-[11px] text-navy/40">
+                    {DOC_FOLDERS.find((d) => d.value === f.folder)?.label || f.folder} · {f.mimeType || '—'} ·{' '}
+                    {formatDate(f.createdAt)} · Uploaded by {relLabel(f.uploadedBy?.value)}
+                  </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <a

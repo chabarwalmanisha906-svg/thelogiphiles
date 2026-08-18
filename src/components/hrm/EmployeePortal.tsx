@@ -18,6 +18,7 @@ import {
   Camera,
   UploadCloud,
   Download,
+  Trash2,
   FileText,
   FileVideo,
   FileImage,
@@ -33,6 +34,7 @@ import {
   Field,
   inputClass,
   compressImage,
+  relLabel,
   useUnreadMessages,
 } from '@/components/dashboard/ui'
 const ChatPanel = dynamic(() => import('@/components/chat/ChatPanel').then((m) => m.ChatPanel), {
@@ -503,6 +505,16 @@ function FilesView({ employeeId, toast }: { employeeId: string; toast: (m: strin
     }
   }
 
+  async function handleDelete(id: string) {
+    if (!confirm('Remove this document?')) return
+    try {
+      await api(`/employee-files/${id}`, { method: 'DELETE' })
+      setFiles((prev) => prev.filter((f) => f.id !== id))
+    } catch {
+      toast('Only whoever uploaded a document can remove it — ask your admin if you need this taken down')
+    }
+  }
+
   const visible = activeFolder ? files.filter((f) => f.folder === activeFolder) : files
   const counts = Object.fromEntries(FOLDERS.map((f) => [f.value, files.filter((x) => x.folder === f.value).length]))
 
@@ -541,6 +553,7 @@ function FilesView({ employeeId, toast }: { employeeId: string; toast: (m: strin
         {visible.length === 0 && <p className="px-5 py-8 text-center font-body text-sm text-navy/40">No files here yet.</p>}
         {visible.map((f) => {
           const Icon = fileIconFor(f.mimeType)
+          const canDelete = f.uploadedBy?.relationTo === 'employees' && String(f.uploadedBy?.value?.id) === String(employeeId)
           return (
             <div key={f.id} className="flex items-center justify-between border-b border-navy/10 px-5 py-4 last:border-0">
               <div className="flex items-center gap-4">
@@ -548,13 +561,26 @@ function FilesView({ employeeId, toast }: { employeeId: string; toast: (m: strin
                 <div>
                   <b className="block font-body text-[13px] text-navy">{f.label || f.filename}</b>
                   <small className="font-body text-[11px] text-navy/40">
-                    {f.mimeType} · {f.filesize ? `${(f.filesize / 1024 / 1024).toFixed(1)} MB` : ''}
+                    {f.mimeType} · {f.filesize ? `${(f.filesize / 1024 / 1024).toFixed(1)} MB` : ''} ·{' '}
+                    {f.createdAt ? new Date(f.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}{' '}
+                    · Uploaded by {canDelete ? 'You' : relLabel(f.uploadedBy?.value)}
                   </small>
                 </div>
               </div>
-              <a href={f.url} target="_blank" rel="noopener noreferrer" className="rounded-md border border-navy/15 p-2 text-navy/50 hover:bg-navy/5">
-                <Download size={14} />
-              </a>
+              <div className="flex shrink-0 items-center gap-2">
+                <a href={f.url} target="_blank" rel="noopener noreferrer" className="rounded-md border border-navy/15 p-2 text-navy/50 hover:bg-navy/5">
+                  <Download size={14} />
+                </a>
+                {canDelete && (
+                  <button
+                    onClick={() => handleDelete(f.id)}
+                    className="rounded-md border border-navy/15 p-2 text-navy/50 hover:bg-red-50 hover:text-red-500"
+                    title="Remove"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
             </div>
           )
         })}
