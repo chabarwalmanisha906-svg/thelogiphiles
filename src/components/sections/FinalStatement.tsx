@@ -3,13 +3,6 @@ import { ScrollReveal } from '@/components/ScrollReveal'
 export function FinalStatement() {
   return (
     <section className="relative overflow-hidden bg-navy px-6 py-28 md:px-10 md:py-40">
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-6 -right-4 select-none font-serif text-[clamp(11rem,55vw,22rem)] font-bold leading-none text-transparent [-webkit-text-stroke:2px_rgba(255,255,255,0.08)] md:right-14"
-      >
-        ;
-      </span>
-
       <div
         aria-hidden="true"
         className="pointer-events-none absolute bottom-9 right-10 hidden items-end gap-5 sm:flex md:right-14"
