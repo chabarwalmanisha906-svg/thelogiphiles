@@ -52,6 +52,16 @@ export const EmployeeFiles: CollectionConfig = {
   },
   upload: {
     staticDir: 'employee-files',
+    // These are sensitive HR documents (resumes, ID proof, joining letters). The
+    // Vercel Blob storage adapter marks every successful file response
+    // `Cache-Control: public, max-age=31536000` — Vercel's edge CDN then caches
+    // that response and serves it to anyone with the URL for a year, bypassing
+    // Payload's access control entirely on every request after the first
+    // authenticated view. Force no-store so each request re-checks access.
+    modifyResponseHeaders: ({ headers }) => {
+      headers.set('Cache-Control', 'private, no-store')
+      return headers
+    },
   },
   fields: [
     { name: 'label', type: 'text', required: true },
