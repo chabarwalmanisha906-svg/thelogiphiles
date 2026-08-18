@@ -50,6 +50,50 @@ export const Employees: CollectionConfig = {
         }
       },
     ],
+    afterLogin: [
+      async ({ user, req }) => {
+        try {
+          // Must pass `req` so this runs inside the same transaction as the
+          // login operation itself — without it, this opens a separate
+          // connection that tries to lock the same employees row the still-
+          // uncommitted login transaction already holds, deadlocking both.
+          await req.payload.create({
+            collection: 'login-logs',
+            data: { employee: user.id, loginAt: new Date().toISOString() },
+            overrideAccess: true,
+            req,
+          })
+        } catch (err) {
+          console.error(`Failed to record login for employee ${user.id}:`, err)
+        }
+      },
+    ],
+    afterLogout: [
+      async ({ req }) => {
+        if (!req.user) return
+        try {
+          const open = await req.payload.find({
+            collection: 'login-logs',
+            where: { employee: { equals: req.user.id }, logoutAt: { exists: false } },
+            sort: '-loginAt',
+            limit: 1,
+            overrideAccess: true,
+            req,
+          })
+          if (open.docs[0]) {
+            await req.payload.update({
+              collection: 'login-logs',
+              id: open.docs[0].id,
+              data: { logoutAt: new Date().toISOString() },
+              overrideAccess: true,
+              req,
+            })
+          }
+        } catch (err) {
+          console.error(`Failed to record logout for employee ${req.user.id}:`, err)
+        }
+      },
+    ],
   },
   fields: [
     { name: 'name', type: 'text', required: true },

@@ -2631,28 +2631,104 @@ function TasksPage({
 
 /* ============================== ACTIVITY LOGS ============================== */
 
-function ActivityPage({ employees }: { employees: Doc[] }) {
-  const rows = employees
-    .map((e) => {
-      const sessions: Doc[] = e.sessions || []
-      const latest = sessions.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
-      if (!latest) return null
-      const online = new Date(latest.expiresAt).getTime() > Date.now()
-      return { name: e.name, login: latest.createdAt, expires: latest.expiresAt, online }
-    })
-    .filter(Boolean) as { name: string; login: string; expires: string; online: boolean }[]
+// Payload's default JWT lifetime for auth collections — used to tell a
+// genuinely still-open session apart from one that was simply never closed
+// out and has since expired on its own.
+const SESSION_EXPIRY_MS = 2 * 60 * 60 * 1000
 
-  rows.sort((a, b) => new Date(b.login).getTime() - new Date(a.login).getTime())
+function formatLogTime(iso?: string | null) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDuration(loginAt: string, logoutAt: string | null | undefined) {
+  const end = logoutAt ? new Date(logoutAt) : new Date()
+  const ms = Math.max(0, end.getTime() - new Date(loginAt).getTime())
+  const h = Math.floor(ms / 3600000)
+  const m = Math.floor((ms % 3600000) / 60000)
+  return `${h}h ${m}m`
+}
+
+function ActivityPage({ employees }: { employees: Doc[] }) {
+  const [logs, setLogs] = useState<Doc[]>([])
+  const [loading, setLoading] = useState(true)
+  const [employeeFilter, setEmployeeFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    const data = await api('/login-logs?limit=500&sort=-loginAt&depth=1')
+    setLogs(data.docs || [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  function isStillActive(l: Doc) {
+    return !l.logoutAt && Date.now() - new Date(l.loginAt).getTime() < SESSION_EXPIRY_MS
+  }
+
+  const filtered = logs.filter((l) => {
+    if (employeeFilter && String(relId(l.employee)) !== employeeFilter) return false
+    if (fromDate && new Date(l.loginAt) < new Date(fromDate)) return false
+    if (toDate && new Date(l.loginAt) > new Date(`${toDate}T23:59:59`)) return false
+    const active = isStillActive(l)
+    if (statusFilter === 'active' && !active) return false
+    if (statusFilter === 'ended' && active) return false
+    return true
+  })
 
   return (
     <div>
-      <SectionHead title="Login Activity" subtitle="Most recent session per team member." />
+      <SectionHead title="Login Activity" subtitle="Employee login/logout history with session duration." />
+
+      <div className="mb-6 flex flex-wrap gap-3">
+        <select value={employeeFilter} onChange={(e) => setEmployeeFilter(e.target.value)} className={inputClass}>
+          <option value="">All Employees</option>
+          {employees.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.name}
+            </option>
+          ))}
+        </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={inputClass}>
+          <option value="all">All Statuses</option>
+          <option value="active">Active (still logged in)</option>
+          <option value="ended">Logged out / ended</option>
+        </select>
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          className={inputClass}
+          title="From date"
+        />
+        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className={inputClass} title="To date" />
+        {(employeeFilter || statusFilter !== 'all' || fromDate || toDate) && (
+          <button
+            type="button"
+            onClick={() => {
+              setEmployeeFilter('')
+              setStatusFilter('all')
+              setFromDate('')
+              setToDate('')
+            }}
+            className="rounded-md border border-navy/15 px-4 py-2.5 font-heading text-xs font-bold uppercase text-navy hover:bg-navy/5"
+          >
+            Clear Filters
+          </button>
+        )}
+      </div>
 
       <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
-        <table className="w-full min-w-[600px]">
+        <table className="w-full min-w-[760px]">
           <thead>
             <tr className="border-b border-navy/10 bg-offwhite/60 text-left">
-              {['Employee', 'Last Login', 'Session Expires', 'Status'].map((h) => (
+              {['Employee', 'Login', 'Logout', 'Duration', 'Status'].map((h) => (
                 <th key={h} className="px-4 py-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-navy/40">
                   {h}
                 </th>
@@ -2660,20 +2736,26 @@ function ActivityPage({ employees }: { employees: Doc[] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
-              <tr key={i} className="border-b border-navy/10 font-body text-sm last:border-0">
-                <td className="px-4 py-3.5 font-bold text-navy">{r.name}</td>
-                <td className="px-4 py-3.5 text-navy/70">{new Date(r.login).toLocaleString('en-IN')}</td>
-                <td className="px-4 py-3.5 text-navy/70">{new Date(r.expires).toLocaleString('en-IN')}</td>
-                <td className="px-4 py-3.5">
-                  <Badge color={r.online ? 'green' : 'gray'}>{r.online ? 'Online' : 'Offline'}</Badge>
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
+            {filtered.map((l) => {
+              const active = isStillActive(l)
+              return (
+                <tr key={l.id} className="border-b border-navy/10 font-body text-sm last:border-0">
+                  <td className="px-4 py-3.5 font-bold text-navy">{relLabel(l.employee)}</td>
+                  <td className="px-4 py-3.5 text-navy/70">{formatLogTime(l.loginAt)}</td>
+                  <td className="px-4 py-3.5 text-navy/70">
+                    {l.logoutAt ? formatLogTime(l.logoutAt) : active ? '—' : 'Session expired'}
+                  </td>
+                  <td className="px-4 py-3.5 text-navy/70">{formatDuration(l.loginAt, l.logoutAt)}</td>
+                  <td className="px-4 py-3.5">
+                    <Badge color={active ? 'green' : 'gray'}>{active ? 'Active' : 'Ended'}</Badge>
+                  </td>
+                </tr>
+              )
+            })}
+            {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center font-body text-sm text-navy/40">
-                  No login activity yet.
+                <td colSpan={5} className="px-4 py-8 text-center font-body text-sm text-navy/40">
+                  No login activity found for these filters.
                 </td>
               </tr>
             )}
