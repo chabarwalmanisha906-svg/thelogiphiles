@@ -16,12 +16,14 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
     background-color: var(--color-offwhite);
     color: var(--color-navy);
     font-family: var(--font-body);
+    overflow-x: hidden;
   }
 
   h1,
