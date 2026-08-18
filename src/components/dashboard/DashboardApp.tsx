@@ -1172,6 +1172,15 @@ function PitchPage({
     if (!email) return
     const subject = `A proposal for ${p.company} | The Logiphiles`
     const body = `Hi ${p.decisionMaker},\n\nWe'd love to share a focused proposal for ${p.need || 'your project'}, tailored to ${p.company}.\n\nWould you be open to a short conversation this week?\n\nRegards,\nThe Logiphiles`
+
+    // mailto: only does anything if the device has a default mail app
+    // configured, which many browser-only Gmail users don't have — so also
+    // copy the draft to the clipboard as a guaranteed-to-work fallback.
+    navigator.clipboard
+      ?.writeText(`To: ${email}\nSubject: ${subject}\n\n${body}`)
+      .then(() => toast(`Pitch email copied — paste it into Gmail or wherever you send from (To: ${email})`))
+      .catch(() => {})
+
     location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
 
