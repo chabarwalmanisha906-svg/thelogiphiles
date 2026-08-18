@@ -1968,14 +1968,22 @@ function EmployeeProfileModal({
   const [passwordSaving, setPasswordSaving] = useState(false)
   const [revealedPassword, setRevealedPassword] = useState('')
 
+  const [tasks, setTasks] = useState<Doc[]>([])
+
   const loadFiles = useCallback(async () => {
     const data = await api(`/employee-files?where[employee][equals]=${employee.id}&limit=200&sort=-createdAt`)
     setFiles(data.docs || [])
   }, [employee.id])
 
+  const loadTasks = useCallback(async () => {
+    const data = await api(`/tasks?where[employee][equals]=${employee.id}&limit=100&sort=-createdAt&depth=1`)
+    setTasks(data.docs || [])
+  }, [employee.id])
+
   useEffect(() => {
     loadFiles()
-  }, [loadFiles])
+    loadTasks()
+  }, [loadFiles, loadTasks])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -2233,6 +2241,28 @@ function EmployeeProfileModal({
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </form>
+
+        <div className="border-t border-navy/10 pt-5">
+          <h4 className="mb-3 font-heading text-sm font-extrabold text-navy">
+            Assigned Work ({tasks.filter((t) => t.status !== 'completed').length} active)
+          </h4>
+          <div className="rounded-lg border border-navy/10">
+            {tasks.length === 0 && <p className="px-4 py-6 text-center font-body text-sm text-navy/40">No tasks assigned yet.</p>}
+            {tasks.map((t) => (
+              <div key={t.id} className="flex items-center justify-between border-b border-navy/10 px-4 py-3 last:border-0">
+                <div className="min-w-0">
+                  <span className="block truncate font-body text-[13px] font-semibold text-navy">{t.title}</span>
+                  <span className="font-body text-[11px] text-navy/50">
+                    {t.client ? relLabel(t.client) : 'No client'} · {formatDate(t.deadline)}
+                  </span>
+                </div>
+                <Badge color={t.status === 'completed' ? 'green' : t.status === 'review' ? 'blue' : t.status === 'in-progress' ? 'yellow' : 'gray'}>
+                  {t.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div className="border-t border-navy/10 pt-5">
           <button
