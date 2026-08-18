@@ -8,5 +8,6 @@ export async function GET() {
     connected: settings?.connected || false,
     connectedEmail: settings?.connectedEmail || null,
     hasRefreshToken: !!settings?.refreshToken,
+    workspaceRootFolderId: settings?.workspaceRootFolderId || null,
   })
 }
