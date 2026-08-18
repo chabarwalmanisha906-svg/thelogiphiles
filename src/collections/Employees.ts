@@ -1,4 +1,5 @@
 import type { CollectionConfig, Access, FieldAccess } from 'payload'
+import { createEmployeeDriveFolder } from '../lib/googleDrive'
 
 const selfOrAdmin: Access = ({ req }) => {
   if (!req.user) return false
@@ -30,13 +31,22 @@ export const Employees: CollectionConfig = {
   hooks: {
     afterChange: [
       async ({ doc, operation, req }) => {
-        if (operation === 'create' && !doc.employeeId) {
-          await req.payload.update({
-            collection: 'employees',
-            id: doc.id,
-            data: { employeeId: `TL-${String(doc.id).padStart(4, '0')}` },
-            req,
-          })
+        if (operation !== 'create') return
+
+        const update: Record<string, unknown> = {}
+        if (!doc.employeeId) update.employeeId = `TL-${String(doc.id).padStart(4, '0')}`
+
+        if (!doc.driveFolderId) {
+          try {
+            const folderId = await createEmployeeDriveFolder(req.payload, doc.name)
+            if (folderId) update.driveFolderId = folderId
+          } catch (err) {
+            console.error(`Failed to create Drive folder for employee "${doc.name}":`, err)
+          }
+        }
+
+        if (Object.keys(update).length > 0) {
+          await req.payload.update({ collection: 'employees', id: doc.id, data: update, req })
         }
       },
     ],
@@ -73,6 +83,11 @@ export const Employees: CollectionConfig = {
       type: 'checkbox',
       defaultValue: true,
       admin: { position: 'sidebar' },
+    },
+    {
+      name: 'driveFolderId',
+      type: 'text',
+      admin: { position: 'sidebar', readOnly: true, description: 'Google Drive Workspace/Team folder ID.' },
     },
   ],
 }

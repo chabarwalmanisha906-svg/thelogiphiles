@@ -1532,6 +1532,7 @@ function TeamPage({
   const [createdCreds, setCreatedCreds] = useState<{ name: string; email: string; password: string } | null>(null)
   const [passwordField, setPasswordField] = useState('')
   const [selected, setSelected] = useState<Doc | null>(null)
+  const [syncingTeam, setSyncingTeam] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -1591,15 +1592,42 @@ function TeamPage({
     toast('Copied to clipboard')
   }
 
+  async function handleSyncTeamFromDrive() {
+    setSyncingTeam(true)
+    try {
+      const res = await fetch('/api/google/sync-team', { method: 'POST', credentials: 'include' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Sync failed')
+      const parts: string[] = []
+      if (data.linked.length > 0) parts.push(`Linked: ${data.linked.join(', ')}`)
+      if (data.unmatched.length > 0) parts.push(`No matching employee for: ${data.unmatched.join(', ')}`)
+      toast(parts.length > 0 ? parts.join(' — ') : 'Already in sync — no new Team folders found in Drive')
+      await refresh()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Sync failed')
+    } finally {
+      setSyncingTeam(false)
+    }
+  }
+
   return (
     <div>
       <SectionHead
         title="Team Management"
         subtitle="Add and onboard employees, roles and departments."
         action={
-          <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
-            + Add Team Member
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSyncTeamFromDrive}
+              disabled={syncingTeam}
+              className="rounded-md border border-navy/15 px-5 py-3 font-heading text-xs font-bold uppercase text-navy hover:bg-navy/5 disabled:opacity-60"
+            >
+              {syncingTeam ? 'Syncing…' : 'Sync Team from Drive'}
+            </button>
+            <button onClick={() => setOpen(true)} className="rounded-md bg-mint px-5 py-3 font-heading text-xs font-bold uppercase text-white hover:bg-navy">
+              + Add Team Member
+            </button>
+          </div>
         }
       />
 
@@ -1923,6 +1951,17 @@ function EmployeeProfileModal({
               </div>
             </Field>
           </div>
+
+          {employee.driveFolderId && (
+            <a
+              href={`https://drive.google.com/drive/folders/${employee.driveFolderId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 rounded-md border border-navy/15 py-2.5 font-heading text-xs font-bold uppercase text-navy hover:bg-navy/5"
+            >
+              Open Workspace Folder
+            </a>
+          )}
 
           <Field label="Name">
             <input name="name" defaultValue={employee.name} required className={inputClass} />

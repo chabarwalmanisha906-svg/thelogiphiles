@@ -87,6 +87,27 @@ async function ensureWorkspaceRoot(payload: Payload, accessToken: string): Promi
   return rootId
 }
 
+async function ensureTeamRoot(payload: Payload, accessToken: string): Promise<string> {
+  const settings = await payload.findGlobal({ slug: 'google-integration' })
+  if (settings?.teamRootFolderId) return settings.teamRootFolderId
+
+  const workspaceRootId = await ensureWorkspaceRoot(payload, accessToken)
+  const teamRootId = await findOrCreateChildFolder('Team', workspaceRootId, accessToken)
+  await payload.updateGlobal({ slug: 'google-integration', data: { teamRootFolderId: teamRootId } })
+  return teamRootId
+}
+
+// Creates <Workspace>/Team/<Employee Name>, returning the folder ID. Same
+// best-effort contract as createClientDriveFolders: null when Drive isn't
+// connected rather than throwing, so it never blocks creating the employee.
+export async function createEmployeeDriveFolder(payload: Payload, employeeName: string): Promise<string | null> {
+  const accessToken = await getAccessToken(payload)
+  if (!accessToken) return null
+
+  const teamRootId = await ensureTeamRoot(payload, accessToken)
+  return findOrCreateChildFolder(employeeName, teamRootId, accessToken)
+}
+
 // Creates <Workspace>/<Client Name>/Documents and /Projects, returning the three folder IDs.
 // Returns null (rather than throwing) when Drive isn't connected, so callers can treat this
 // as an optional enhancement instead of a hard requirement for creating a client.
@@ -181,4 +202,37 @@ export async function syncClientsFromDrive(payload: Payload): Promise<{ created:
   }
 
   return { created }
+}
+
+// Reverse sync for Team folders: links a Drive folder under Workspace/Team to an
+// EXISTING employee whose name matches exactly. Unlike clients, employees can't be
+// auto-created from a folder name alone — they're login accounts and need an email
+// and password, which a folder has no way of supplying — so an unmatched folder is
+// left alone and reported back rather than silently ignored.
+export async function syncEmployeesFromDrive(payload: Payload): Promise<{ linked: string[]; unmatched: string[] }> {
+  const accessToken = await getAccessToken(payload)
+  if (!accessToken) throw new Error('Google Drive is not connected')
+
+  const teamRootId = await ensureTeamRoot(payload, accessToken)
+  const driveFolders = await listChildFolders(teamRootId, accessToken)
+
+  const employees = await payload.find({ collection: 'employees', limit: 1000, depth: 0 })
+
+  const linked: string[] = []
+  const unmatched: string[] = []
+
+  for (const folder of driveFolders) {
+    const alreadyLinked = employees.docs.some((e) => e.driveFolderId === folder.id)
+    if (alreadyLinked) continue
+
+    const match = employees.docs.find((e) => e.name === folder.name && !e.driveFolderId)
+    if (match) {
+      await payload.update({ collection: 'employees', id: match.id, data: { driveFolderId: folder.id } })
+      linked.push(folder.name)
+    } else {
+      unmatched.push(folder.name)
+    }
+  }
+
+  return { linked, unmatched }
 }

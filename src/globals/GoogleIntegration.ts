@@ -22,5 +22,10 @@ export const GoogleIntegration: GlobalConfig = {
       type: 'text',
       admin: { readOnly: true, description: 'The "Workspace" root folder in Google Drive.' },
     },
+    {
+      name: 'teamRootFolderId',
+      type: 'text',
+      admin: { readOnly: true, description: 'The "Workspace/Team" folder in Google Drive.' },
+    },
   ],
 }
